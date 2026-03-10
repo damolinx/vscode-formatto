@@ -1,0 +1,76 @@
+{
+  "name": "damolinx-formatto",
+  "displayName": "formatto for VS Code",
+  "description": "Rubyfmt extension.",
+  "author": "damolinx",
+  "publisher": "damolinx",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/damolinx/vscode-formatto"
+  },
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "format",
+    "ruby"
+  ],
+  "activationEvents": [
+    "onLanguage:ruby"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Formatto",
+      "properties": {
+        "formatto.rubyfmtPath": {
+          "scope": "resource",
+          "type": "string",
+          "default": "rubyfmt",
+          "description": "Path to the rubyfmt executable.",
+          "pattern": "^(|\\S+)$",
+          "patternErrorMessage": "Value must be empty, or a path"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "npm run ts:check-types && npm run ts:compile",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "test": "node ./out/test/runTest.js",
+    "ts:check-types": "tsc --noEmit",
+    "ts:compile": "tsc -p ./",
+    "ts:watch": "tsc -w -p ./",
+    "vsce-package": "vsce package",
+    "vscode:prepublish": "npm run ts:check-types && node esbuild.mjs --production",
+    "watch": "npm run ts:watch"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@stylistic/eslint-plugin": "^5.4.0",
+    "@types/node": "^20.18.0",
+    "@types/vscode": "~1.105",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.46.0",
+    "@vscode/test-electron": "^2.5.0",
+    "@vscode/vsce": "^3.7.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.30.0",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2",
+    "sinon": "^21.0.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.35.0"
+  }
+}
