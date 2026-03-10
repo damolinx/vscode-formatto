@@ -1,7 +1,7 @@
 {
-  "name": "damolinx-formatto",
-  "displayName": "formatto for VS Code",
-  "description": "Rubyfmt extension.",
+  "name": "formatto",
+  "displayName": "Formatto for VS Code",
+  "description": "Formats Ruby files using rubyfmt.",
   "author": "damolinx",
   "publisher": "damolinx",
   "license": "Apache-2.0",
@@ -18,11 +18,13 @@
     "workspace"
   ],
   "categories": [
-    "Programming Languages"
+    "Formatters"
   ],
   "keywords": [
     "format",
-    "ruby"
+    "formatter",
+    "ruby",
+    "rubyfmt"
   ],
   "activationEvents": [
     "onLanguage:ruby"
