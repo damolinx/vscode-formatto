@@ -27,7 +27,6 @@ Once configured, Formatto will format Ruby files using the standard **Format Doc
 
 Formatto writes diagnostic information to the **Formatto** output channel.  
 You can adjust the log level using **Developer: Set Log Level** and selecting **Formatto**.  
-See the VS Code documentation for details:  
-https://code.visualstudio.com/updates/v1_73#_setting-log-level-per-output-channel
+See [documentation](https://code.visualstudio.com/updates/v1_73#_setting-log-level-per-output-channel) for details.
 
 [↑ Back to top](#formatto-for-vs-code)
