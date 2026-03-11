@@ -18,6 +18,8 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
 
 Once configured, Formatto will format Ruby files using **Format Document**, or automatically on save if **Editor: Format on Save** is enabled.
 
+[↑ Back to top](#formatto-for-vs-code)
+
 ## Configuration
 
 | Setting | Description |
@@ -38,6 +40,8 @@ The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from t
 "formatto.rubyfmtPath": "rubyfmt" // resolved from PATH
 ```
 
+[↑ Back to top](#formatto-for-vs-code)
+
 ## Format Selection
 
 `rubyfmt` does not support range formatting. Formatto supports the **Format Selection** command using custom heuristic logic. This feature is **experimental** and results may not match **Format Document** formatting.
@@ -45,6 +49,8 @@ The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from t
 > DO NOT report issues with selection formatting to the `rubyfmt` project.
 
 To enable, use the `formatto.enableRangeFormatting` setting. Changes take effect only after a restart.
+
+[↑ Back to top](#formatto-for-vs-code)
 
 ## Logs
 
