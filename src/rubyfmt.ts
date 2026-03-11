@@ -2,12 +2,18 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { ExtensionContext } from './extensionContext';
 
-export function formatDocument(
+export async function formatDocument(
   context: ExtensionContext,
   document: vscode.TextDocument,
   token: vscode.CancellationToken,
 ): Promise<string> {
-  return formatText(context, document.getText(), document.uri, token);
+  const text = document.getText();
+  if (text.length === 0) {
+    return text;
+  }
+
+  const formattedText = await formatText(context, document.getText(), document.uri, token);
+  return formattedText;
 }
 
 export async function formatText(
@@ -19,6 +25,9 @@ export async function formatText(
   const rubyfmtPath = context.configuration.getRubyfmtPath(uri);
   const workspaceFolder = uri && vscode.workspace.getWorkspaceFolder(uri)?.uri;
 
+  context.log.info(
+    `Running: ${rubyfmtPath}${workspaceFolder ? ` (cwd: ${workspaceFolder.fsPath})` : ''}`,
+  );
   const formattedSource = new Promise<string>((resolve, reject) => {
     const child = spawn(rubyfmtPath, [], {
       cwd: workspaceFolder?.fsPath,

@@ -25,8 +25,11 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     _options: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
-    const selection = document.getText(range);
+    if (range.isEmpty) {
+      return;
+    }
 
+    const selection = document.getText(range);
     const formattedSource = await formatText(this.context, selection, document.uri, token).catch(
       (reason) => {
         this.context.log.error(
