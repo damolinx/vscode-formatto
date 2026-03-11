@@ -8,5 +8,11 @@ export function activate(extensionContext: vscode.ExtensionContext) {
   context.log.info('Activating extension', extensionContext.extension.packageJSON.version);
 
   registerDocumentFormattingEditProvider(context);
-  registerRangeFormattingEditProvider(context);
+
+  if (context.configuration.enableRangeFormatting) {
+    context.log.info('RangeFormattingEdit enabled');
+    registerRangeFormattingEditProvider(context);
+  } else {
+    context.log.info('RangeFormattingEdit not enabled');
+  }
 }

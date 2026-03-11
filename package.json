@@ -34,6 +34,11 @@
     "configuration": {
       "title": "Formatto",
       "properties": {
+        "formatto.enableRangeFormatting": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
+        },
         "formatto.rubyfmtPath": {
           "scope": "resource",
           "type": "string",

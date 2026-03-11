@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { rubyfmt } from '../rubyfmt';
+import { tryFormatDocument } from '../rubyfmt';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
@@ -11,6 +11,9 @@ export function registerDocumentFormattingEditProvider(context: ExtensionContext
   );
 }
 
+/**
+ * Format a Ruby document.
+ */
 export class DocumentFormattingEditProvider implements vscode.DocumentFormattingEditProvider {
   constructor(private readonly context: ExtensionContext) {}
 
@@ -19,20 +22,14 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     _options: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
-    const source = document.getText();
-    let edits: vscode.TextEdit[] | undefined;
-
-    try {
-      const formattedSource = await rubyfmt(this.context, source, token);
-      const sourceRange = new vscode.Range(
-        document.positionAt(0),
-        document.positionAt(source.length),
-      );
-      edits = [vscode.TextEdit.replace(sourceRange, formattedSource)];
-    } catch (e) {
-      this.context.log.error(e as any);
+    const formattedSource = await tryFormatDocument(this.context, document, token);
+    if (!formattedSource) {
+      return;
     }
 
-    return edits;
+    const documentRange = document.validateRange(
+      new vscode.Range(0, 0, document.lineCount, Number.MAX_SAFE_INTEGER),
+    );
+    return [vscode.TextEdit.replace(documentRange, formattedSource)];
   }
 }

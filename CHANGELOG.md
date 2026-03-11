@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+- Disable **Format Selection** by default since `rubyfmt` does not support range formatting.
+  - Add `formatto.enableRangeFormatting` setting to opt in to an experimental heuristic.
+
 ## 0.1.1
 - Add icon. 
 
