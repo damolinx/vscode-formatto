@@ -5,6 +5,7 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
 ## Table of Contents
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
+- [Format Selection](#format-selection)
 - [Logs](#logs)
 
 ## Getting Started
@@ -15,13 +16,35 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
    - Set `"formatto.rubyfmtPath"` in your VS Code [settings JSON](https://code.visualstudio.com/docs/configure/settings#_settings-json-file)
    - Use **Formatto: Rubyfmt Path** in the VS Code [Settings UI](https://code.visualstudio.com/docs/configure/settings#_settings-editor)
 
-Once configured, Formatto will format Ruby files using the standard **Format Document** or **Format Selection** commands, or will automatically format on save if **Editor: Format on Save** is enabled.
+Once configured, Formatto will format Ruby files using **Format Document**, or automatically on save if **Editor: Format on Save** is enabled.
 
 ## Configuration
 
 | Setting | Description |
 |--------|-------------|
-| `formatto.rubyfmtPath` | Absolute or relative path to the `rubyfmt` executable. Defaults to `rubyfmt` (resolved from `PATH`). |
+| `formatto.rubyfmtPath` | Path to the `rubyfmt` executable. Defaults to `rubyfmt`. |
+| `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. |
+
+The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from the system PATH. A full path or a tokenized path may also be used. The following tokens are available:
+
+* `${userHome}`: User home directory  
+* `${workspaceFolder}`: Workspace folder containing the file being formatted  
+
+**Examples**
+
+```jsonc
+"formatto.rubyfmtPath": "${userHome}/bin/rubyfmt"
+"formatto.rubyfmtPath": "${workspaceFolder}/bin/rubyfmt"
+"formatto.rubyfmtPath": "rubyfmt" // resolved from PATH
+```
+
+## Format Selection
+
+`rubyfmt` does not support range formatting. Formatto supports the **Format Selection** command using custom heuristic logic. This feature is **experimental** and results may not match **Format Document** formatting.
+
+> DO NOT report issues with selection formatting to the `rubyfmt` project.
+
+To enable, use the `formatto.enableRangeFormatting` setting. Changes take effect only after a restart.
 
 ## Logs
 

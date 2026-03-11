@@ -43,7 +43,7 @@
           "scope": "resource",
           "type": "string",
           "default": "rubyfmt",
-          "description": "Path to the rubyfmt executable.",
+          "markdownDescription": "Path to the rubyfmt executable. The following tokens are available:\n\n- `${userHome}`: User home directory.\n- `${workspaceFolder}`: Current workspace root directory.\n\nIf the value is a bare command (e.g. `rubyfmt`), it will be resolved from the current environment's PATH.",
           "pattern": "^(|\\S+)$",
           "patternErrorMessage": "Value must be empty, or a path"
         }

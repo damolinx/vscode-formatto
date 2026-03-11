@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX } from './constants';
+import { resolveTokenizedPath } from './pathTokenization';
 
 export class Configuration {
   /**
@@ -23,10 +24,11 @@ export class Configuration {
   }
 
   /**
-   * Get `rubyfmt` path.
+   * Get `rubyfmt` path
    */
-  public getRubyfmtPath(scope?: vscode.Uri): string {
-    return this.getValue(scope, 'rubyfmtPath', 'rubyfmt');
+  public getRubyfmtPath(scope?: vscode.Uri, resolveTokens = true): string {
+    const rawValue = this.getValue(scope, 'rubyfmtPath', 'rubyfmt');
+    return resolveTokens ? resolveTokenizedPath(rawValue, scope) : rawValue;
   }
 
   /**
