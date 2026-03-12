@@ -19,18 +19,6 @@ export class Configuration {
     return this.getConfiguration(undefined).get(section, defaultValue);
   }
 
-  public get enableRangeFormatting(): boolean {
-    return this.getGlobal('enableRangeFormatting', false);
-  }
-
-  /**
-   * Get `rubyfmt` path
-   */
-  public getRubyfmtPath(scope?: vscode.Uri, resolveTokens = true): string {
-    const rawValue = this.getValue(scope, 'rubyfmtPath', 'rubyfmt');
-    return resolveTokens ? resolveTokenizedPath(rawValue, scope) : rawValue;
-  }
-
   /**
    * Return a {@link scope}-scoped value from {@link EXTENSION_PREFIX} configuration.
    */
@@ -42,5 +30,34 @@ export class Configuration {
     defaultValue?: T,
   ): T | undefined {
     return this.getConfiguration(scope).get(section, defaultValue);
+  }
+
+  /**
+   * Enable {@link vscode.DocumentRangeFormattingEditProvider} provider.
+   */
+  public get enableRangeFormatting(): boolean {
+    return this.getGlobal('enableRangeFormatting', false);
+  }
+
+  /**
+   * Get `rubyfmt` path.
+   */
+  public getRubyfmtPath(scope?: vscode.Uri, resolveTokens = true): string {
+    const rawValue = this.getValue(scope, 'rubyfmtPath', 'rubyfmt');
+    return resolveTokens ? resolveTokenizedPath(rawValue, scope) : rawValue;
+  }
+
+  /**
+   * Verify that resolved {@link getRubyfmtPath rubyfmt path} is reachable.
+   */
+  public get verifyRubyfmt(): boolean {
+    return this.getGlobal('verifyRubyfmt', true);
+  }
+
+  /**
+   * Whether to verify that resolved {@link getRubyfmtPath rubyfmt path} is reachable.
+   */
+  public async updateVerifyRubyfmt(value: boolean): Promise<void> {
+    await this.getConfiguration(undefined).update('verifyRubyfmt', value);
   }
 }

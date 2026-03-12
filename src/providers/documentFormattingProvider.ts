@@ -22,14 +22,14 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     _options: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
-    const formattedSource = await tryFormatDocument(this.context, document, token);
-    if (!formattedSource) {
+    const formattedText = await tryFormatDocument(this.context, document, token);
+    if (!formattedText) {
       return;
     }
 
     const documentRange = document.validateRange(
       new vscode.Range(0, 0, document.lineCount, Number.MAX_SAFE_INTEGER),
     );
-    return [vscode.TextEdit.replace(documentRange, formattedSource)];
+    return [vscode.TextEdit.replace(documentRange, formattedText)];
   }
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { formatText } from '../rubyfmt';
+import { tryFormatText } from '../rubyfmt';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
@@ -29,17 +29,8 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    const selection = document.getText(range);
-    const formattedSource = await formatText(this.context, selection, document.uri, token).catch(
-      (reason) => {
-        const rangeString = `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
-        this.context.log.error(
-          `Failed to format '${vscode.workspace.asRelativePath(document.uri)}'. Range: ${rangeString}. ${reason}`,
-        );
-        return undefined;
-      },
-    );
-    if (!formattedSource) {
+    const formattedText = await tryFormatText(this.context, document, range, token);
+    if (!formattedText) {
       return;
     }
 
@@ -48,12 +39,12 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return [
         vscode.TextEdit.replace(
           range,
-          RangeFormattingEditProvider.indentText(formattedSource, indentation),
+          RangeFormattingEditProvider.indentText(formattedText, indentation),
         ),
       ];
     }
 
-    return [vscode.TextEdit.replace(range, formattedSource)];
+    return [vscode.TextEdit.replace(range, formattedText)];
   }
 
   private static getIndentOfFirstNonEmptyLine(

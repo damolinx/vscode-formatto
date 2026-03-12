@@ -16,6 +16,8 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
    - Set `"formatto.rubyfmtPath"` in your VS Code [settings JSON](https://code.visualstudio.com/docs/configure/settings#_settings-json-file)
    - Use **Formatto: Rubyfmt Path** in the VS Code [Settings UI](https://code.visualstudio.com/docs/configure/settings#_settings-editor)
 
+Formatto will verify that `rubyfmt` is available before running the formatter and will prompt you if it cannot be found.
+
 Once configured, Formatto will format Ruby files using **Format Document**, or automatically on save if **Editor: Format on Save** is enabled.
 
 [↑ Back to top](#formatto-for-vs-code)
@@ -26,6 +28,7 @@ Once configured, Formatto will format Ruby files using **Format Document**, or a
 |--------|-------------|
 | `formatto.rubyfmtPath` | Path to the `rubyfmt` executable. Defaults to `rubyfmt`. |
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. |
+| `formatto.verifyRubyfmt` | Verifies that `rubyfmt` is available before running the formatter. |
 
 The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from the system PATH. A full path or a tokenized path may also be used. The following tokens are available:
 

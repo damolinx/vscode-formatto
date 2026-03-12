@@ -1,18 +1,25 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
+import { verifyRubyfmt, VerifyRubyfmtOptions } from './commands/verifyRubyfmt';
 import { ExtensionContext } from './extensionContext';
+
+export interface FormatExecutionOptions {
+  cwd?: string;
+  resolvedRubyfmtPath: string;
+}
 
 export async function formatDocument(
   context: ExtensionContext,
   document: vscode.TextDocument,
-  token: vscode.CancellationToken,
+  options?: FormatExecutionOptions,
+  token?: vscode.CancellationToken,
 ): Promise<string> {
   const text = document.getText();
   if (text.length === 0) {
     return text;
   }
 
-  const formattedText = await formatText(context, document.getText(), document.uri, token);
+  const formattedText = await formatText(context, document.getText(), document.uri, options, token);
   return formattedText;
 }
 
@@ -20,21 +27,22 @@ export async function formatText(
   context: ExtensionContext,
   text: string,
   uri: vscode.Uri,
-  token: vscode.CancellationToken,
+  options?: FormatExecutionOptions,
+  token?: vscode.CancellationToken,
 ): Promise<string> {
-  const rubyfmtPath = context.configuration.getRubyfmtPath(uri);
-  const workspaceFolder = uri && vscode.workspace.getWorkspaceFolder(uri)?.uri;
+  const {
+    resolvedRubyfmtPath = context.configuration.getRubyfmtPath(uri),
+    cwd = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath,
+  } = options ?? {};
 
-  context.log.info(
-    `Running: '${rubyfmtPath}'${workspaceFolder ? `. Cwd: '${workspaceFolder.fsPath}'` : ''}`,
-  );
-  const formattedSource = new Promise<string>((resolve, reject) => {
-    const child = spawn(rubyfmtPath, [], {
-      cwd: workspaceFolder?.fsPath,
+  context.log.info(`Running: '${resolvedRubyfmtPath}'${cwd ? `. Cwd: '${cwd}'` : ''}`);
+  const formattedText = new Promise<string>((resolve, reject) => {
+    const child = spawn(resolvedRubyfmtPath, [], {
+      cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
-    const cancelSubscription = token.onCancellationRequested(() => {
+    const cancelSubscription = token?.onCancellationRequested(() => {
       child.kill('SIGKILL');
       reject();
     });
@@ -51,13 +59,13 @@ export async function formatText(
     child.on('error', (err: NodeJS.ErrnoException) => {
       const message =
         err.code && ['EACCES', 'ENOENT'].includes(err.code)
-          ? `'${rubyfmtPath}' not found`
+          ? `'${resolvedRubyfmtPath}' not found`
           : 'rubyfmt failed';
       reject(new Error(message, { cause: err }));
     });
     child.on('close', (code) => {
-      cancelSubscription.dispose();
-      if (token.isCancellationRequested) {
+      cancelSubscription?.dispose();
+      if (token?.isCancellationRequested) {
         return; // already canceled
       }
 
@@ -71,22 +79,65 @@ export async function formatText(
     child.stdin.write(text);
     child.stdin.end();
   });
-  return formattedSource;
+  return formattedText;
 }
 
 export async function tryFormatDocument(
   context: ExtensionContext,
   document: vscode.TextDocument,
-  token: vscode.CancellationToken,
+  token?: vscode.CancellationToken,
 ): Promise<string | undefined> {
-  let formattedSource: string | undefined;
+  const options: VerifyRubyfmtOptions & FormatExecutionOptions = {
+    resolvedRubyfmtPath: context.configuration.getRubyfmtPath(document.uri),
+    cwd: vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath,
+    scope: document.uri,
+  };
+  if (!(await verifyRubyfmt(context, options))) {
+    return;
+  }
+
+  let formattedText: string | undefined;
   try {
-    formattedSource = await formatDocument(context, document, token);
+    formattedText = await formatDocument(context, document, options, token);
   } catch (e) {
     const message = e instanceof Error ? e.message : (e?.toString() ?? 'unknown');
     context.log.error(
       `Failed to format '${vscode.workspace.asRelativePath(document.uri)}'. Error: ${message}`,
     );
   }
-  return formattedSource;
+  return formattedText;
+}
+
+export async function tryFormatText(
+  context: ExtensionContext,
+  document: vscode.TextDocument,
+  range: vscode.Range,
+  token?: vscode.CancellationToken,
+): Promise<string | undefined> {
+  const options: VerifyRubyfmtOptions & FormatExecutionOptions = {
+    resolvedRubyfmtPath: context.configuration.getRubyfmtPath(document.uri),
+    cwd: vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath,
+    scope: document.uri,
+  };
+  if (!(await verifyRubyfmt(context, options))) {
+    return;
+  }
+
+  let formattedText: string | undefined;
+  try {
+    formattedText = await formatText(
+      context,
+      document.getText(range),
+      document.uri,
+      options,
+      token,
+    );
+  } catch (e) {
+    const rangeString = `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
+    const message = e instanceof Error ? e.message : (e?.toString() ?? 'unknown');
+    context.log.error(
+      `Failed to format '${vscode.workspace.asRelativePath(document.uri)}'. Range: ${rangeString}. Error: ${message}`,
+    );
+  }
+  return formattedText;
 }

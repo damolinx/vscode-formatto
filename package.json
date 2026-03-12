@@ -44,8 +44,13 @@
           "type": "string",
           "default": "rubyfmt",
           "markdownDescription": "Path to the rubyfmt executable. The following tokens are available:\n\n- `${userHome}`: User home directory.\n- `${workspaceFolder}`: Current workspace root directory.\n\nIf the value is a bare command (e.g. `rubyfmt`), it will be resolved from the current environment's PATH.",
-          "pattern": "^(|\\S+)$",
-          "patternErrorMessage": "Value must be empty, or a path"
+          "pattern": "^\\S*$",
+          "patternErrorMessage": "Value must be empty, or a valid path"
+        },
+        "formatto.verifyRubyfmt": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Verify that `rubyfmt` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.rubyfmtPath%22%5D)."
         }
       }
     }
