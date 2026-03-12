@@ -36,7 +36,7 @@ export async function verifyRubyfmt(
 
   switch (selection) {
     case 'Install':
-      vscode.env.openExternal(vscode.Uri.parse('https://github.com/penelopezone/rubyfmt'));
+      vscode.env.openExternal(vscode.Uri.parse('https://github.com/fables-tales/rubyfmt'));
       break;
 
     case 'Configure':
