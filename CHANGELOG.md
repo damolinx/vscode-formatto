@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.4
+- Update link to `rubyfmt` installation.
+
 ## 0.1.3
 - Add verification and UX around `rubyfmt` availability before running the formatter.
 
