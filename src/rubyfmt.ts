@@ -26,7 +26,7 @@ export async function formatText(
   const workspaceFolder = uri && vscode.workspace.getWorkspaceFolder(uri)?.uri;
 
   context.log.info(
-    `Running: ${rubyfmtPath}${workspaceFolder ? ` (cwd: ${workspaceFolder.fsPath})` : ''}`,
+    `Running: '${rubyfmtPath}'${workspaceFolder ? `. Cwd: '${workspaceFolder.fsPath}'` : ''}`,
   );
   const formattedSource = new Promise<string>((resolve, reject) => {
     const child = spawn(rubyfmtPath, [], {
@@ -48,8 +48,12 @@ export async function formatText(
     child.stderr.on('data', (chunk) => {
       stderr += chunk.toString();
     });
-    child.on('error', (err) => {
-      reject(new Error(`Failed to spawn rubyfmt: ${err.message}`));
+    child.on('error', (err: NodeJS.ErrnoException) => {
+      const message =
+        err.code && ['EACCES', 'ENOENT'].includes(err.code)
+          ? `'${rubyfmtPath}' not found`
+          : 'rubyfmt failed';
+      reject(new Error(message, { cause: err }));
     });
     child.on('close', (code) => {
       cancelSubscription.dispose();
@@ -58,7 +62,7 @@ export async function formatText(
       }
 
       if (code !== 0) {
-        reject(new Error(`rubyfmt exited with code ${code}: ${stderr.trim()}`));
+        reject(new Error(`rubyfmt exited with code ${code}: ${stderr.trim()} `));
       } else {
         resolve(stdout);
       }
@@ -79,8 +83,10 @@ export async function tryFormatDocument(
   try {
     formattedSource = await formatDocument(context, document, token);
   } catch (e) {
-    const message = e instanceof Error ? e.message : (e?.toString() ?? 'Failed to format document');
-    context.log.error(message, vscode.workspace.asRelativePath(document.uri));
+    const message = e instanceof Error ? e.message : (e?.toString() ?? 'unknown');
+    context.log.error(
+      `Failed to format '${vscode.workspace.asRelativePath(document.uri)}'. Error: ${message}`,
+    );
   }
   return formattedSource;
 }
