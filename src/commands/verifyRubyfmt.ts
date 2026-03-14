@@ -40,7 +40,7 @@ export async function verifyRubyfmt(
   );
 
   const selection = await vscode.window.showWarningMessage(
-    `rubyfmt was not found as '${resolvedRubyfmtPath}'`,
+    `rubyfmt could not be run at '${resolvedRubyfmtPath}'. It may be missing or incompatible with this system.`,
     'Install',
     'Configure',
     "Don't ask again",
