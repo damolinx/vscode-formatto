@@ -11,7 +11,7 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
 ## Getting Started
 
 1. Install `rubyfmt`. See the official [installation guide](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation).
-2. Ensure `rubyfmt` is available on your system `PATH`.  
+2. Ensure `rubyfmt` is available on your system `PATH`.
    If it is not, configure the path using one of the following:
    - Set `"formatto.rubyfmtPath"` in your VS Code [settings JSON](https://code.visualstudio.com/docs/configure/settings#_settings-json-file)
    - Use **Formatto: Rubyfmt Path** in the VS Code [Settings UI](https://code.visualstudio.com/docs/configure/settings#_settings-editor)
@@ -26,14 +26,15 @@ Once configured, Formatto will format Ruby files using **Format Document**, or a
 
 | Setting | Description |
 |--------|-------------|
-| `formatto.rubyfmtPath` | Path to the `rubyfmt` executable. Defaults to `rubyfmt`. |
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. |
+| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--prism`. |
+| `formatto.rubyfmtPath` | Path to the `rubyfmt`. Defaults to `rubyfmt`. |
 | `formatto.verifyRubyfmt` | Verifies that `rubyfmt` is available before running the formatter. |
 
 The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from the system PATH. A full path or a tokenized path may also be used. The following tokens are available:
 
-* `${userHome}`: User home directory  
-* `${workspaceFolder}`: Workspace folder containing the file being formatted  
+* `${userHome}`: User home directory
+* `${workspaceFolder}`: Workspace folder containing the file being formatted
 
 **Examples**
 
@@ -57,8 +58,8 @@ To enable, use the `formatto.enableRangeFormatting` setting. Changes take effect
 
 ## Logs
 
-Formatto writes diagnostic information to the **Formatto** output channel.  
-You can adjust the log level using **Developer: Set Log Level** and selecting **Formatto**.  
+Formatto writes diagnostic information to the **Formatto** output channel.
+You can adjust the log level using **Developer: Set Log Level** and selecting **Formatto**.
 See [documentation](https://code.visualstudio.com/updates/v1_73#_setting-log-level-per-output-channel) for details.
 
 [↑ Back to top](#formatto-for-vs-code)

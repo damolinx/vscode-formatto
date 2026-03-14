@@ -39,6 +39,14 @@
           "default": false,
           "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
         },
+        "formatto.rubyfmtArgs": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Additional arguments to pass to `rubyfmt`, one argument per entry. Use `rubyfmt --help` to check for available flags."
+        },
         "formatto.rubyfmtPath": {
           "scope": "resource",
           "type": "string",

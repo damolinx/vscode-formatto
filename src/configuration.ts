@@ -40,6 +40,13 @@ export class Configuration {
   }
 
   /**
+   * Get `rubyfmt` arguments.
+   */
+  public getRubyfmtArgs(scope?: vscode.Uri): string[] {
+    return this.getValue<string[]>(scope, 'rubyfmtArgs', []);
+  }
+
+  /**
    * Get `rubyfmt` path.
    */
   public getRubyfmtPath(scope?: vscode.Uri, resolveTokens = true): string {
@@ -55,7 +62,7 @@ export class Configuration {
   }
 
   /**
-   * Whether to verify that resolved {@link getRubyfmtPath rubyfmt path} is reachable.
+   * Update {@link verifyRubyfmt} setting.
    */
   public async updateVerifyRubyfmt(value: boolean): Promise<void> {
     await this.getConfiguration(undefined).update('verifyRubyfmt', value);

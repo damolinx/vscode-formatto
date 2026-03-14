@@ -4,6 +4,7 @@ import { verifyRubyfmt, VerifyRubyfmtOptions } from './commands/verifyRubyfmt';
 import { ExtensionContext } from './extensionContext';
 
 export interface FormatExecutionOptions {
+  args?: string[];
   cwd?: string;
   resolvedRubyfmtPath: string;
 }
@@ -31,13 +32,16 @@ export async function formatText(
   token?: vscode.CancellationToken,
 ): Promise<string> {
   const {
-    resolvedRubyfmtPath = context.configuration.getRubyfmtPath(uri),
+    args = context.configuration.getRubyfmtArgs(),
     cwd = vscode.workspace.getWorkspaceFolder(uri)?.uri.fsPath,
+    resolvedRubyfmtPath = context.configuration.getRubyfmtPath(uri),
   } = options ?? {};
 
-  context.log.info(`Running: '${resolvedRubyfmtPath}'${cwd ? `. Cwd: '${cwd}'` : ''}`);
+  context.log.info(
+    `Running: '${resolvedRubyfmtPath} ${args.length ? args.join(' ') : ''}'${cwd ? `. Cwd: ${cwd}` : ''}`,
+  );
   const formattedText = new Promise<string>((resolve, reject) => {
-    const child = spawn(resolvedRubyfmtPath, [], {
+    const child = spawn(resolvedRubyfmtPath, args, {
       cwd,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
