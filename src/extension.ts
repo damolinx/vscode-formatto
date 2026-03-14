@@ -10,9 +10,9 @@ export function activate(extensionContext: vscode.ExtensionContext) {
   registerDocumentFormattingEditProvider(context);
 
   if (context.configuration.enableRangeFormatting) {
-    context.log.info('Format-Selection enabled (experimental)');
+    context.log.info('Format-Selection enabled. Setting: `formatto.enableRangeFormatting`');
     registerRangeFormattingEditProvider(context);
   } else {
-    context.log.info('Format-Selection disabled');
+    context.log.info('Format-Selection not enabled. Setting: `formatto.enableRangeFormatting`');
   }
 }

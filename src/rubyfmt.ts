@@ -61,10 +61,7 @@ export async function formatText(
       stderr += chunk.toString();
     });
     child.on('error', (err: NodeJS.ErrnoException) => {
-      const message =
-        err.code && ['EACCES', 'ENOENT'].includes(err.code)
-          ? `'${resolvedRubyfmtPath}' not found`
-          : 'rubyfmt failed';
+      const message = err.code ? `${resolvedRubyfmtPath} (${err.code})` : err.message;
       reject(new Error(message, { cause: err }));
     });
     child.on('close', (code) => {
@@ -103,11 +100,10 @@ export async function tryFormatDocument(
   let formattedText: string | undefined;
   try {
     formattedText = await formatDocument(context, document, options, token);
-  } catch (e) {
-    const message = e instanceof Error ? e.message : (e?.toString() ?? 'unknown');
-    context.log.error(
-      `Failed to format '${vscode.workspace.asRelativePath(document.uri)}'. Error: ${message}`,
-    );
+  } catch (error) {
+    const path = vscode.workspace.asRelativePath(document.uri);
+    const message = error instanceof Error ? error.message : error;
+    context.log.error(`Failed to format '${path}'. Error: ${message}`);
   }
   return formattedText;
 }

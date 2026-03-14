@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { exec } from 'child_process';
+import { execFile, ExecFileException } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
 
 export interface VerifyRubyfmtOptions {
@@ -7,6 +7,8 @@ export interface VerifyRubyfmtOptions {
   cwd?: string;
   scope?: vscode.Uri;
 }
+
+let lastSeenRubyfmtVersion: string | undefined;
 
 export async function verifyRubyfmt(
   context: ExtensionContext,
@@ -23,9 +25,19 @@ export async function verifyRubyfmt(
     options.cwd ??
     (options.scope ? vscode.workspace.getWorkspaceFolder(options.scope)?.uri.fsPath : undefined);
 
-  if (await isAvailable(resolvedRubyfmtPath, cwd)) {
+  const result = await isAvailable(resolvedRubyfmtPath, cwd);
+  if (result.version !== undefined) {
+    if (result.version !== lastSeenRubyfmtVersion) {
+      lastSeenRubyfmtVersion = result.version;
+      context.log.info(`rubyfmt: ${resolvedRubyfmtPath} (version ${result.version})`);
+    }
     return true;
   }
+
+  lastSeenRubyfmtVersion = undefined;
+  context.log.error(
+    `rubyfmt: ${resolvedRubyfmtPath} (${result.error?.code || result.error?.name})`,
+  );
 
   const selection = await vscode.window.showWarningMessage(
     `rubyfmt was not found as '${resolvedRubyfmtPath}'`,
@@ -36,7 +48,9 @@ export async function verifyRubyfmt(
 
   switch (selection) {
     case 'Install':
-      vscode.env.openExternal(vscode.Uri.parse('https://github.com/fables-tales/rubyfmt'));
+      vscode.env.openExternal(
+        vscode.Uri.parse('https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation'),
+      );
       break;
 
     case 'Configure':
@@ -51,9 +65,18 @@ export async function verifyRubyfmt(
   return false;
 }
 
-async function isAvailable(command: string, cwd?: string): Promise<boolean> {
-  const whereOrWhich = process.platform === 'win32' ? 'where' : 'which';
-  return new Promise((resolve, _reject) =>
-    exec(`${whereOrWhich} ${command}`, { cwd }, (error) => resolve(!error)),
-  );
+async function isAvailable(
+  command: string,
+  cwd?: string,
+): Promise<{ error?: ExecFileException; version?: string }> {
+  return new Promise((resolve) => {
+    execFile(command, ['--version'], { cwd }, (error, stdout) => {
+      if (error) {
+        resolve({ error });
+      } else {
+        const version = stdout?.trim() || 'unknown';
+        resolve({ version });
+      }
+    });
+  });
 }

@@ -1,13 +1,15 @@
 # Changelog
 
-## 0.1.5
+## 0.2.0
 - Add `formatto.rubyfmtArgs` setting to pass additional arguments to `rubyfmt`.
 - `rubyfmt` verification UX updates:
-  - **Ignore** option becomes **Don't ask again**.
-  - `formatto.verifyRubyfmt`setting is updated in **User Settings**.
+  - **Ignore** option renamed to **Don't ask again**.
+  - `formatto.verifyRubyfmt` setting is always updated in **User Settings** (vs Workspace or Workspace Folder).
+- Update link to `rubyfmt` installation (*Installation* section).
+- Availability check now logs the `rubyfmt --version` output.
 
 ## 0.1.4
-- Update link to `rubyfmt` installation.
+- Update link to `rubyfmt` installation (current repo).
 
 ## 0.1.3
 - Add verification and UX around `rubyfmt` availability before running the formatter.
