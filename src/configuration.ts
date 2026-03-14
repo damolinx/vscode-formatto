@@ -6,7 +6,7 @@ export class Configuration {
   /**
    * Get a {@link EXTENSION_PREFIX `formatto`} configuration object scoped by {@link scope}.
    */
-  private getConfiguration(scope?: vscode.Uri): vscode.WorkspaceConfiguration {
+  private getConfiguration(scope?: vscode.ConfigurationScope): vscode.WorkspaceConfiguration {
     return vscode.workspace.getConfiguration(EXTENSION_PREFIX, scope);
   }
 
@@ -22,10 +22,14 @@ export class Configuration {
   /**
    * Return a {@link scope}-scoped value from {@link EXTENSION_PREFIX} configuration.
    */
-  private getValue<T>(scope: vscode.Uri | undefined, section: string): T | undefined;
-  private getValue<T>(scope: vscode.Uri | undefined, section: string, defaultValue: T): T;
+  private getValue<T>(scope: vscode.ConfigurationScope | undefined, section: string): T | undefined;
   private getValue<T>(
-    scope: vscode.Uri | undefined,
+    scope: vscode.ConfigurationScope | undefined,
+    section: string,
+    defaultValue: T,
+  ): T;
+  private getValue<T>(
+    scope: vscode.ConfigurationScope | undefined,
     section: string,
     defaultValue?: T,
   ): T | undefined {
@@ -42,7 +46,7 @@ export class Configuration {
   /**
    * Get `rubyfmt` arguments.
    */
-  public getRubyfmtArgs(scope?: vscode.Uri): string[] {
+  public getRubyfmtArgs(scope?: vscode.ConfigurationScope): string[] {
     return this.getValue<string[]>(scope, 'rubyfmtArgs', []);
   }
 
@@ -62,9 +66,13 @@ export class Configuration {
   }
 
   /**
-   * Update {@link verifyRubyfmt} setting.
+   * Update {@link verifyRubyfmt} setting. Defaults to
+   * {@link vscode.ConfigurationTarget.Global user settings}.
    */
-  public async updateVerifyRubyfmt(value: boolean): Promise<void> {
-    await this.getConfiguration(undefined).update('verifyRubyfmt', value);
+  public async updateVerifyRubyfmt(
+    value: boolean,
+    configurationTarget = vscode.ConfigurationTarget.Global,
+  ): Promise<void> {
+    await this.getConfiguration(undefined).update('verifyRubyfmt', value, configurationTarget);
   }
 }

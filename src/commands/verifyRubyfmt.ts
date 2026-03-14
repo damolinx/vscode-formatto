@@ -31,7 +31,7 @@ export async function verifyRubyfmt(
     `rubyfmt was not found as '${resolvedRubyfmtPath}'`,
     'Install',
     'Configure',
-    'Ignore',
+    "Don't ask again",
   );
 
   switch (selection) {
@@ -43,7 +43,7 @@ export async function verifyRubyfmt(
       vscode.commands.executeCommand('workbench.action.openSettings', 'formatto.rubyfmtPath');
       break;
 
-    case 'Ignore':
+    case "Don't ask again":
       await context.configuration.updateVerifyRubyfmt(false);
       break;
   }

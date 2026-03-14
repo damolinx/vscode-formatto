@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5
+- Add `formatto.rubyfmtArgs` setting to pass additional arguments to `rubyfmt`.
+- `rubyfmt` verification UX updates:
+  - **Ignore** option becomes **Don't ask again**.
+  - `formatto.verifyRubyfmt`setting is updated in **User Settings**.
+
 ## 0.1.4
 - Update link to `rubyfmt` installation.
 
@@ -12,7 +18,7 @@
 - Add support for `${userHome}` and `${workspaceFolder}` tokens in `formatto.rubyfmtPath`.
 
 ## 0.1.1
-- Add icon. 
+- Add icon.
 
 ## 0.1.0
 - Initial version. Runs **rubyfmt** using `formatto.rubyfmtPath` setting value, which defaults to `rubyfmt`.

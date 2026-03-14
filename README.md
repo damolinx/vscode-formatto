@@ -50,7 +50,7 @@ The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from t
 
 `rubyfmt` does not support range formatting. Formatto supports the **Format Selection** command using custom heuristic logic. This feature is **experimental** and results may not match **Format Document** formatting.
 
-> DO NOT report issues with selection formatting to the `rubyfmt` project.
+> **DO NOT** report issues with selection formatting to the `rubyfmt` project.
 
 To enable, use the `formatto.enableRangeFormatting` setting. Changes take effect only after a restart.
 
