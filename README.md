@@ -13,12 +13,12 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
 1. Install `rubyfmt`. See the official [installation guide](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation).
 2. Ensure `rubyfmt` is available on your system `PATH`.
    If it is not, configure the path using one of the following:
-   - Set `"formatto.rubyfmtPath"` in your VS Code [settings JSON](https://code.visualstudio.com/docs/configure/settings#_settings-json-file)
+   - Set `"formatto.rubyfmtPath"` in your VS Code [settings.json](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) file
    - Use **Formatto: Rubyfmt Path** in the VS Code [Settings UI](https://code.visualstudio.com/docs/configure/settings#_settings-editor)
 
 Formatto will verify that `rubyfmt` is available before running the formatter and will prompt you if it cannot be found.
 
-Once configured, Formatto will format Ruby files using **Format Document**, or automatically on save if **Editor: Format on Save** is enabled.
+Once configured, Formatto will format Ruby files using the default **Format Document** command, or automatically on save if **Editor: Format on Save** is enabled. Check [Format Selection](#format-selection) section below for documentation on this specific command.
 
 [↑ Back to top](#formatto-for-vs-code)
 
@@ -48,11 +48,11 @@ The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from t
 
 ## Format Selection
 
-`rubyfmt` does not support range formatting. Formatto supports the **Format Selection** command using custom heuristic logic. This feature is **experimental** and results may not match **Format Document** formatting.
+`rubyfmt` does not support formatting of a document range. Therefore, Formatto supports the **Format Selection** command by sending the document range and adjusting results back as necessary using a heuristic. This feature is **experimental** and results may not match **Format Document** formatting, or even expected ones, depending on the shape of the selection.
 
 > **DO NOT** report issues with selection formatting to the `rubyfmt` project.
 
-To enable, use the `formatto.enableRangeFormatting` setting. Changes take effect only after a restart.
+To enable this feature, use the `formatto.enableRangeFormatting` setting. A change to this setting takes effect only after a restart due to VS Code internals.
 
 [↑ Back to top](#formatto-for-vs-code)
 
