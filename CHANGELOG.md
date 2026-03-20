@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.1
+- **Format Selection** does not indent selection starting mid-expression.
+
 ## 0.2.0
 - Add `formatto.rubyfmtArgs` setting to pass additional arguments to `rubyfmt`.
 - `rubyfmt` verification UX updates:

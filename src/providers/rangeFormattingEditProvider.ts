@@ -35,7 +35,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     }
 
     const indentation = RangeFormattingEditProvider.getIndentOfFirstNonEmptyLine(document, range);
-    if (indentation !== 0) {
+    if (indentation > 0 && range.start.character <= indentation) {
       return [
         vscode.TextEdit.replace(
           range,
