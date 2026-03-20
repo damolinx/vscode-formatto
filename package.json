@@ -23,6 +23,7 @@
   "keywords": [
     "format",
     "formatter",
+    "multi-root",
     "ruby",
     "rubyfmt"
   ],
