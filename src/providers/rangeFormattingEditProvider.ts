@@ -14,7 +14,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
 /**
  * Format a selection in a Ruby document. Range formatting is not supported by
  * `rubyfmt` so this implementation uses the selection as document and adjusts
- * the indentation if `rubyfmt` succeeds.  Experimental.
+ * the indentation if `rubyfmt` succeeds. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
   constructor(private readonly context: ExtensionContext) {}
