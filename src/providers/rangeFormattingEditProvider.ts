@@ -64,7 +64,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     const spaces = ' '.repeat(indent);
     return text
       .split('\n')
-      .map((line) => spaces + line)
+      .map((line) => (line ? spaces + line : line))
       .join('\n');
   }
 }
