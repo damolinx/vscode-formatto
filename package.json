@@ -32,6 +32,14 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "formatto.formatPendingChanges",
+        "title": "Format Pending Changes",
+        "category": "Formatto",
+        "enablement": "gitOpenRepositoryCount > 0"
+      }
+    ],
     "configuration": {
       "title": "Formatto",
       "properties": {

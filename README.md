@@ -5,7 +5,9 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
 ## Table of Contents
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
-- [Format Selection](#format-selection)
+- [Commands](#commands)
+  - [Format Pending Changes](#format-pending-changes)
+  - [Format Selection](#format-selection)
 - [Logs](#logs)
 
 ## Getting Started
@@ -40,13 +42,23 @@ The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from t
 
 ```jsonc
 "formatto.rubyfmtPath": "${userHome}/bin/rubyfmt"
-"formatto.rubyfmtPath": "${workspaceFolder}/bin/rubyfmt"
-"formatto.rubyfmtPath": "rubyfmt" // resolved from PATH
+"formatto.rubyfmtPath": "${workspaceFolder}/tools/rubyfmt"
+"formatto.rubyfmtPath": "rubyfmt"
 ```
 
 [↑ Back to top](#formatto-for-vs-code)
 
-## Format Selection
+## Commands
+
+### Format Pending Changes
+
+Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in your Git repositories. This is a convenient option when you prefer not to enable **Format on Save**, or when you want to format multiple changed files at once.
+
+This command is available only when at least one Git repository is open in the workspace.
+
+[↑ Back to top](#formatto-for-vs-code)
+
+### Format Selection
 
 `rubyfmt` does not support formatting of a document range. Therefore, Formatto supports the **Format Selection** command by sending the document range and adjusting results back as necessary using a heuristic. This feature is **experimental** and results may not match **Format Document** formatting, or even expected ones, depending on the shape of the selection.
 

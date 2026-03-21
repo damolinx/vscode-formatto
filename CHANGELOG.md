@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.2
+- Add **Format Pending Changes** command to format uncommitted `.rb` files.
+
 ## 0.2.1
 - Improvements to **Format Selection**.
 
