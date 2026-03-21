@@ -1,34 +1,44 @@
 import * as vscode from 'vscode';
-import type { API as GitAPI, Repository } from '../../typings/git';
+import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
 import { tryFormatDocument } from '../rubyfmt';
-
-let cachedGitApi: GitAPI | false | undefined;
+import { getGitApi } from '../utils/git';
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
-  const api = getGitApi();
+  const api = getGitApi(context);
   if (!api) {
-    vscode.window.showWarningMessage('Git support is unavailable.');
+    const msg = 'Git support is unavailable';
+    vscode.window.showWarningMessage(msg);
+    context.log.debug('Format:', msg);
     return;
   }
 
   if (api.repositories.length === 0) {
-    vscode.window.showWarningMessage('No Git repositories found.');
+    const msg = 'No repositories found in workspace.';
+    vscode.window.showWarningMessage(msg);
+    context.log.debug('Format:', msg);
     return;
   }
 
   const { token } = new vscode.CancellationTokenSource();
-  for (const repo of api.repositories) {
-    if (token.isCancellationRequested) {
-      return;
-    }
-    await formatRepoPendingChanges(context, repo, token);
-  }
+  await Promise.all(
+    api.repositories.map(async (repo) => {
+      const repoId =
+        repo.rootUri.scheme === 'file' ? repo.rootUri.fsPath : repo.rootUri.toString(true);
+
+      if (token.isCancellationRequested) {
+        context.log.debug('Format: Cancelled by token before processing repo.', repoId);
+        return;
+      }
+      await formatRepoPendingChanges(context, repo, repoId, token);
+    }),
+  );
 }
 
 async function formatRepoPendingChanges(
   context: ExtensionContext,
   repo: Repository,
+  repoId: string,
   token: vscode.CancellationToken,
 ): Promise<void> {
   const changed = [...repo.state.workingTreeChanges, ...repo.state.indexChanges];
@@ -39,25 +49,10 @@ async function formatRepoPendingChanges(
 
   for (const uri of uris) {
     if (token.isCancellationRequested) {
+      context.log.debug('Format: Cancelled by token while processing repo.', repoId);
       return;
     }
     const document = await vscode.workspace.openTextDocument(uri);
     await tryFormatDocument(context, document, token);
   }
-}
-
-function getGitApi(): GitAPI | false {
-  if (cachedGitApi !== undefined) {
-    return cachedGitApi;
-  }
-
-  const gitExtension = vscode.extensions.getExtension('vscode.git');
-  if (!gitExtension) {
-    cachedGitApi = false;
-    return cachedGitApi;
-  }
-
-  const git = gitExtension.exports as { getAPI(version: number): GitAPI };
-  cachedGitApi = git.getAPI(1);
-  return cachedGitApi;
 }

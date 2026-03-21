@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX } from './constants';
-import { resolveTokenizedPath } from './pathTokenization';
+import { resolveTokenizedPath } from './utils/pathTokenization';
 
 export class Configuration {
   /**
