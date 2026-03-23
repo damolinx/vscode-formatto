@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+- Logging improvement.
+- Fix: **Format Pending Changes** command missed applying the update. 
+
 ## 0.2.2
 - Add **Format Pending Changes** command to format uncommitted `.rb` files.
 
