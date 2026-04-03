@@ -3,6 +3,7 @@ import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
 import { tryFormatDocument } from '../rubyfmt';
 import { getGitApi } from '../utils/git';
+import { normalizeForDisplay } from '../utils/uri';
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
   const api = getGitApi(context);
@@ -23,14 +24,12 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
   const { token } = new vscode.CancellationTokenSource();
   await Promise.all(
     api.repositories.map(async (repo) => {
-      const repoId =
-        repo.rootUri.scheme === 'file' ? repo.rootUri.fsPath : repo.rootUri.toString(true);
-
+      const repoDisplayId = normalizeForDisplay(repo.rootUri);
       if (token.isCancellationRequested) {
-        context.log.debug('Format: Cancelled by token before processing repo.', repoId);
+        context.log.debug('Format: Cancelled by token before processing repo.', repoDisplayId);
         return;
       }
-      await formatRepoPendingChanges(context, repo, repoId, token);
+      await formatRepoPendingChanges(context, repo, repoDisplayId, token);
     }),
   );
 }
@@ -38,7 +37,7 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
 async function formatRepoPendingChanges(
   context: ExtensionContext,
   repo: Repository,
-  repoId: string,
+  repoDisplayId: string,
   token: vscode.CancellationToken,
 ): Promise<void> {
   const changed = [...repo.state.workingTreeChanges, ...repo.state.indexChanges];
@@ -49,10 +48,23 @@ async function formatRepoPendingChanges(
 
   for (const uri of uris) {
     if (token.isCancellationRequested) {
-      context.log.debug('Format: Cancelled by token while processing repo.', repoId);
+      context.log.debug('Format: Cancelled by token while processing repo.', repoDisplayId);
       return;
     }
     const document = await vscode.workspace.openTextDocument(uri);
-    await tryFormatDocument(context, document, token);
+    const formatted = await tryFormatDocument(context, document, token);
+    if (formatted && formatted !== document.getText()) {
+      await applyDocumentEdit(document, formatted);
+    }
   }
+}
+
+async function applyDocumentEdit(document: vscode.TextDocument, newText: string): Promise<boolean> {
+  const edit = new vscode.WorkspaceEdit();
+  const fullRange = document.validateRange(
+    new vscode.Range(0, 0, document.lineCount, Number.MAX_SAFE_INTEGER),
+  );
+
+  edit.replace(document.uri, fullRange, newText);
+  return vscode.workspace.applyEdit(edit);
 }
