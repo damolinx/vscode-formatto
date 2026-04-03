@@ -38,7 +38,7 @@ Once configured, use the built‑in **Format Document** command, or enable **Edi
 | Setting | Description |
 |--------|-------------|
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection** |
-| `formatto.formatter` | Formatter to use for formatting. Defaults to `"rubyfmt"` |
+| `formatto.formatter` | Formatter to use for formatting. Defaults to `rubyfmt` |
 
 The `formatto.«formatter»Path` values default to their executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. A path‑like value can be used instead, with the following tokens available:
 
