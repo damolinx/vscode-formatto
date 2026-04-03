@@ -11,16 +11,9 @@ export class Configuration {
   }
 
   /**
-   * Return an unscoped value from {@link EXTENSION_PREFIX} configuration.
-   */
-  private getGlobal<T>(section: string): T | undefined;
-  private getGlobal<T>(section: string, defaultValue: T): T;
-  private getGlobal<T>(section: string, defaultValue?: T): T | undefined {
-    return this.getConfiguration(undefined).get(section, defaultValue);
-  }
-
-  /**
-   * Return a {@link scope}-scoped value from {@link EXTENSION_PREFIX} configuration.
+   * Get a {@link getConfiguration configuration} value from a specific {@link scope}.
+   * @param section — Configuration name, supports dotted names.
+   * @param defaultValue — Value returned if the setting is not defined.
    */
   private getValue<T>(scope: vscode.ConfigurationScope | undefined, section: string): T | undefined;
   private getValue<T>(
@@ -37,10 +30,22 @@ export class Configuration {
   }
 
   /**
+   * Get a {@link getConfiguration configuration} value, applying VS Code's
+   * normal precedence rules.
+   * @param section — Configuration name, supports dotted names.
+   * @param defaultValue — Value returned if the setting is not defined.
+   */
+  private resolveValue<T>(section: string): T | undefined;
+  private resolveValue<T>(section: string, defaultValue: T): T;
+  private resolveValue<T>(section: string, defaultValue?: T): T | undefined {
+    return this.getConfiguration().get(section, defaultValue);
+  }
+
+  /**
    * Enable {@link vscode.DocumentRangeFormattingEditProvider} provider.
    */
   public get enableRangeFormatting(): boolean {
-    return this.getGlobal('enableRangeFormatting', false);
+    return this.resolveValue('enableRangeFormatting', false);
   }
 
   /**
@@ -62,7 +67,7 @@ export class Configuration {
    * Verify that resolved {@link getRubyfmtPath rubyfmt path} is reachable.
    */
   public get verifyRubyfmt(): boolean {
-    return this.getGlobal('verifyRubyfmt', true);
+    return this.resolveValue('verifyRubyfmt', true);
   }
 
   /**
@@ -73,6 +78,6 @@ export class Configuration {
     value: boolean,
     configurationTarget = vscode.ConfigurationTarget.Global,
   ): Promise<void> {
-    await this.getConfiguration(undefined).update('verifyRubyfmt', value, configurationTarget);
+    await this.getConfiguration().update('verifyRubyfmt', value, configurationTarget);
   }
 }
