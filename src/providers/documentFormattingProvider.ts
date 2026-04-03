@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { tryFormatDocument } from '../rubyfmt';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
@@ -22,8 +21,13 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     _options: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
-    const formattedText = await tryFormatDocument(this.context, document, token);
+    const formatter = this.context.formatters.getFor(document.uri);
+    const formattedText = await formatter.tryFormatDocument(document, token);
     if (!formattedText) {
+      this.context.log.debug(
+        'DocumentFormat: No changes to apply',
+        vscode.workspace.asRelativePath(document.uri),
+      );
       return;
     }
 

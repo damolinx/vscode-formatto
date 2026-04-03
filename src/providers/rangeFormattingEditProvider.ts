@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { tryFormatText } from '../rubyfmt';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
@@ -13,8 +12,8 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
 
 /**
  * Format a selection in a Ruby document. Range formatting is not supported by
- * `rubyfmt` so this implementation uses the selection as document and adjusts
- * the indentation if `rubyfmt` succeeds. Experimental.
+ * formatters so this implementation uses the selection as as-is and adjusts
+ * the indentation. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
   constructor(private readonly context: ExtensionContext) {}
@@ -29,13 +28,18 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    const formattedText = await tryFormatText(this.context, document, range, token);
+    const formatter = this.context.formatters.getFor(document.uri);
+    const formattedText = await formatter.tryFormatText(document, range, token);
     if (!formattedText) {
+      this.context.log.debug(
+        'RangeFormat: No changes to apply',
+        vscode.workspace.asRelativePath(document.uri),
+      );
       return;
     }
 
     const indentation = RangeFormattingEditProvider.getIndentOfFirstNonEmptyLine(document, range);
-    if (indentation > 0 && range.start.character <= indentation) {
+    if (indentation > 0 && range.start.character < indentation) {
       return [
         vscode.TextEdit.replace(
           range,

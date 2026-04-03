@@ -1,46 +1,34 @@
 import * as vscode from 'vscode';
 import { execFile, ExecFileException } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
+import { FormatterOptions } from '../formatters/formatter';
+import { FormatterDescriptor } from '../formatters/types';
 
-export interface VerifyRubyfmtOptions {
-  resolvedRubyfmtPath?: string;
-  cwd?: string;
-  scope?: vscode.Uri;
-}
-
-let lastSeenRubyfmtVersion: string | undefined;
-
-export async function verifyRubyfmt(
+export async function verifyFormatter(
   context: ExtensionContext,
-  options: VerifyRubyfmtOptions,
+  scope: vscode.Uri,
+  options: FormatterOptions & { cwd: string },
+  descriptor: FormatterDescriptor,
 ): Promise<boolean> {
-  if (!context.configuration.verifyRubyfmt) {
+  if (!context.configuration.shouldVerifyFormatter(descriptor.id)) {
+    context.log.info(`${descriptor.id}: Skipped verification`);
     return true;
   }
 
-  const resolvedRubyfmtPath =
-    options.resolvedRubyfmtPath ?? context.configuration.getRubyfmtPath(options.scope);
+  const resolvedCmd = options.cmd ?? context.configuration.getFormatterPath(descriptor.id, scope);
 
-  const cwd =
-    options.cwd ??
-    (options.scope ? vscode.workspace.getWorkspaceFolder(options.scope)?.uri.fsPath : undefined);
-
-  const result = await isAvailable(resolvedRubyfmtPath, cwd);
-  if (result.version !== undefined) {
-    if (result.version !== lastSeenRubyfmtVersion) {
-      lastSeenRubyfmtVersion = result.version;
-      context.log.info(`rubyfmt: ${resolvedRubyfmtPath} (version ${result.version})`);
-    }
+  const result = await isAvailable(resolvedCmd, options.cwd, descriptor.versionArgs);
+  if (result.version) {
+    context.log.info(`${descriptor.id}: ${resolvedCmd} - Version: ${result.version}`);
     return true;
   }
 
-  lastSeenRubyfmtVersion = undefined;
   context.log.error(
-    `rubyfmt: ${resolvedRubyfmtPath} (${result.error?.code || result.error?.name})`,
+    `${descriptor.id}: ${resolvedCmd} - ${result.error?.code || result.error?.name}`,
   );
 
   const selection = await vscode.window.showWarningMessage(
-    `rubyfmt could not be run at '${resolvedRubyfmtPath}'. It may be missing or incompatible with this system.`,
+    `Ccould not run formatter as '${resolvedCmd}'. It may be missing or incompatible with this system.`,
     'Install',
     'Configure',
     "Don't ask again",
@@ -48,17 +36,18 @@ export async function verifyRubyfmt(
 
   switch (selection) {
     case 'Install':
-      vscode.env.openExternal(
-        vscode.Uri.parse('https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation'),
-      );
+      vscode.env.openExternal(vscode.Uri.parse(descriptor.installUrl));
       break;
 
     case 'Configure':
-      vscode.commands.executeCommand('workbench.action.openSettings', 'formatto.rubyfmtPath');
+      vscode.commands.executeCommand(
+        'workbench.action.openSettings',
+        `formatto.${descriptor.id}Path`,
+      );
       break;
 
     case "Don't ask again":
-      await context.configuration.updateVerifyRubyfmt(false);
+      await context.configuration.updateVerifyFormatter(descriptor.id, false);
       break;
   }
 
@@ -68,14 +57,14 @@ export async function verifyRubyfmt(
 async function isAvailable(
   command: string,
   cwd?: string,
+  args: string[] = [],
 ): Promise<{ error?: ExecFileException; version?: string }> {
   return new Promise((resolve) => {
-    execFile(command, ['--version'], { cwd }, (error, stdout) => {
+    execFile(command, args, { cwd }, (error, stdout) => {
       if (error) {
         resolve({ error });
       } else {
-        const version = stdout?.trim() || 'unknown';
-        resolve({ version });
+        resolve({ version: stdout?.trim() || 'unknown' });
       }
     });
   });

@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
-import { tryFormatDocument } from '../rubyfmt';
 import { getGitApi } from '../utils/git';
 import { normalizeForDisplay } from '../utils/uri';
 
@@ -10,14 +9,14 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
   if (!api) {
     const msg = 'Git support is unavailable';
     vscode.window.showWarningMessage(msg);
-    context.log.debug('Format:', msg);
+    context.log.debug('ChangesFormat:', msg);
     return;
   }
 
   if (api.repositories.length === 0) {
     const msg = 'No repositories found in workspace.';
     vscode.window.showWarningMessage(msg);
-    context.log.debug('Format:', msg);
+    context.log.debug('ChangesFormat:', msg);
     return;
   }
 
@@ -26,7 +25,7 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     api.repositories.map(async (repo) => {
       const repoDisplayId = normalizeForDisplay(repo.rootUri);
       if (token.isCancellationRequested) {
-        context.log.debug('Format: Cancelled by token before processing repo.', repoDisplayId);
+        context.log.debug(`ChangesFormat: Cancelled before processing '${repoDisplayId}' repo`);
         return;
       }
       await formatRepoPendingChanges(context, repo, repoDisplayId, token);
@@ -48,11 +47,12 @@ async function formatRepoPendingChanges(
 
   for (const uri of uris) {
     if (token.isCancellationRequested) {
-      context.log.debug('Format: Cancelled by token while processing repo.', repoDisplayId);
+      context.log.debug(`ChangesFormat: Cancelled while processing '${repoDisplayId}' repo`);
       return;
     }
     const document = await vscode.workspace.openTextDocument(uri);
-    const formatted = await tryFormatDocument(context, document, token);
+    const formatter = context.formatters.getFor(document.uri);
+    const formatted = await formatter.tryFormatDocument(document, token);
     if (formatted && formatted !== document.getText()) {
       await applyDocumentEdit(document, formatted);
     }

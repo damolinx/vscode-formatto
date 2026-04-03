@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX } from './constants';
+import { FormatterName } from './formatters/types';
 import { resolveTokenizedPath } from './utils/pathTokenization';
 
 export class Configuration {
@@ -49,35 +50,51 @@ export class Configuration {
   }
 
   /**
-   * Get `rubyfmt` arguments.
+   * Get the configured formatter name.
    */
-  public getRubyfmtArgs(scope?: vscode.ConfigurationScope): string[] {
-    return this.getValue<string[]>(scope, 'rubyfmtArgs', []);
+  public getFormatterName(
+    scope: vscode.ConfigurationScope | undefined,
+    defaultValue: FormatterName = 'rubyfmt',
+  ) {
+    return this.getValue<FormatterName>(scope, 'formatter', defaultValue);
   }
 
   /**
-   * Get `rubyfmt` path.
+   * Get {@link getFormatterName configured formatter} arguments.
    */
-  public getRubyfmtPath(scope?: vscode.Uri, resolveTokens = true): string {
-    const rawValue = this.getValue(scope, 'rubyfmtPath', 'rubyfmt');
+  public getFormatterArgs(formatter: FormatterName, scope?: vscode.ConfigurationScope): string[] {
+    return this.getValue<string[]>(scope, `${formatter}Args`, []);
+  }
+
+  /**
+   * Get {@link getFormatterName configured formatter} path.
+   */
+  public getFormatterPath(
+    formatter: FormatterName,
+    scope?: vscode.Uri,
+    resolveTokens = true,
+  ): string {
+    const rawValue = this.getValue(scope, `${formatter}Path`, 'rubyfmt');
     return resolveTokens ? resolveTokenizedPath(rawValue, scope) : rawValue;
   }
 
   /**
-   * Verify that resolved {@link getRubyfmtPath rubyfmt path} is reachable.
+   * Whether formatter should verify that resolved {@link getFormatterPath path}
+   * is reachable.
    */
-  public get verifyRubyfmt(): boolean {
-    return this.resolveValue('verifyRubyfmt', true);
+  public shouldVerifyFormatter(formatter: FormatterName): boolean {
+    return this.resolveValue(`verify${formatter}`, true);
   }
 
   /**
-   * Update {@link verifyRubyfmt} setting. Defaults to
+   * Update {@link shouldVerifyFormatter} setting. Defaults to
    * {@link vscode.ConfigurationTarget.Global user settings}.
    */
-  public async updateVerifyRubyfmt(
+  public async updateVerifyFormatter(
+    formatter: FormatterName,
     value: boolean,
     configurationTarget = vscode.ConfigurationTarget.Global,
   ): Promise<void> {
-    await this.getConfiguration().update('verifyRubyfmt', value, configurationTarget);
+    await this.getConfiguration().update(`verify${formatter}`, value, configurationTarget);
   }
 }

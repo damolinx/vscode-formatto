@@ -1,10 +1,12 @@
 # Formatto for VS Code
 
-Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provide Ruby code formatting.
+Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt) (default) and [rufo](https://github.com/ruby-formatter/rufo). Formatto is fully **multi‑root aware**, formatters can be fully configured per workspace folder.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
 - [Configuration](#configuration)
+  - [Rubyfmt](#rubyfmt)
+  - [Rufo](#rufo)
 - [Commands](#commands)
   - [Format Pending Changes](#format-pending-changes)
   - [Format Selection](#format-selection)
@@ -12,15 +14,22 @@ Formatto integrates [rubyfmt](https://github.com/fables-tales/rubyfmt) to provid
 
 ## Getting Started
 
-1. Install `rubyfmt`. See the official [installation guide](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation).
-2. Ensure `rubyfmt` is available on your system `PATH`.
-   If it is not, configure the path using one of the following:
-   - Set `"formatto.rubyfmtPath"` in your VS Code [settings.json](https://code.visualstudio.com/docs/configure/settings#_settings-json-file) file
-   - Use **Formatto: Rubyfmt Path** in the VS Code [Settings UI](https://code.visualstudio.com/docs/configure/settings#_settings-editor)
+1. Choose which formatter you want to use: **rubyfmt** (default) or **rufo**.  
+   - By default, **rubyfmt** is used, so no changes are required to use it. If you prefer **rufo**, set the `"formatto.formatter"` setting or use the **Formatto: Formatter** option in the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
 
-Formatto will verify that `rubyfmt` is available before running the formatter and will prompt you if it cannot be found.
+2. Make sure the formatter you selected is installed on your system.  
+   - Installation guides: [rubyfmt](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation), [rufo](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation)
 
-Once configured, Formatto will format Ruby files using the default **Format Document** command, or automatically on save if **Editor: Format on Save** is enabled. Check [Format Selection](#format-selection) section below for documentation on this specific command.
+3. Ensure the formatter executable is available on your system `PATH` (a restart may be required).  
+   Alternatively, set the `"formatto.rubyfmtPath"` or `"formatto.rufoPath"` setting, or use the **Formatto: Rubyfmt Path** or **Formatto: Rufo Path** options in the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).  
+   - Formatto verifies that the selected formatter is available before running it and will prompt you if it cannot be found.
+
+Once configured, use the built‑in **Format Document** command, or enable **Editor: Format on Save** to format automatically on save. See [Format Selection](#format-selection) for details on formatting a selection range.
+
+### Choosing a formatter
+- **rubyfmt** provides deterministic, configuration‑free formatting.
+  - It remains as the default purely for backward compatibility, since Formatto originally shipped with support for rubyfmt only.
+- **rufo** supports `.rufo` configuration and offers customizable formatting style.
 
 [↑ Back to top](#formatto-for-vs-code)
 
@@ -28,23 +37,31 @@ Once configured, Formatto will format Ruby files using the default **Format Docu
 
 | Setting | Description |
 |--------|-------------|
-| `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. |
-| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--prism`. |
-| `formatto.rubyfmtPath` | Path to the `rubyfmt`. Defaults to `rubyfmt`. |
-| `formatto.verifyRubyfmt` | Verifies that `rubyfmt` is available before running the formatter. |
+| `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection** |
+| `formatto.formatter` | Formatter to use for formatting. Defaults to `"rubyfmt"` |
 
-The `formatto.rubyfmtPath` value defaults to `rubyfmt`, which is resolved from the system PATH. A full path or a tokenized path may also be used. The following tokens are available:
+The `formatto.«formatter»Path` values default to their executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. A path‑like value can be used instead, with the following tokens available:
 
-* `${userHome}`: User home directory
+* `${userHome}`: User home directory  
 * `${workspaceFolder}`: Workspace folder containing the file being formatted
 
-**Examples**
+### Rubyfmt
 
-```jsonc
-"formatto.rubyfmtPath": "${userHome}/bin/rubyfmt"
-"formatto.rubyfmtPath": "${workspaceFolder}/tools/rubyfmt"
-"formatto.rubyfmtPath": "rubyfmt"
-```
+| Setting | Description |
+|--------|-------------|
+| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--prism` |
+| `formatto.rubyfmtPath` | Path to `rubyfmt`. Defaults to `rubyfmt` |
+| `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before running the formatter |
+
+### Rufo
+
+| Setting | Description |
+|--------|-------------|
+| `formatto.rufoArgs` | Additional arguments to pass to `rufo` |
+| `formatto.rufoPath` | Path to `rufo`. Defaults to `rufo` |
+| `formatto.verifyRufo` | Verify that `rufo` is available before running the formatter |
+
+Additionally, note that Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
 
 [↑ Back to top](#formatto-for-vs-code)
 
@@ -60,11 +77,13 @@ This command is available only when at least one Git repository is open in the w
 
 ### Format Selection
 
-`rubyfmt` does not support formatting of a document range. Therefore, Formatto supports the **Format Selection** command by sending the document range and adjusting results back as necessary using a heuristic. This feature is **experimental** and results may not match **Format Document** formatting, or even expected ones, depending on the shape of the selection.
+Most Ruby formatters do not support formatting arbitrary ranges of a document. Formatto supports the  **Format Selection** command by sending the selected range to the formatter as if it were the full document and then adjusting the result using a heuristic.
 
-> **DO NOT** report issues with selection formatting to the `rubyfmt` project.
+This feature is **experimental**, and results may not match **Format Document** formatting. In some cases, formatting might fail depending on the shape of the selection.
 
-To enable this feature, use the `formatto.enableRangeFormatting` setting. A change to this setting takes effect only after a restart due to VS Code internals.
+> **DO NOT** report issues with selection‑formatting to the formatter projects.
+
+If you understand the limitations, this feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart.
 
 [↑ Back to top](#formatto-for-vs-code)
 

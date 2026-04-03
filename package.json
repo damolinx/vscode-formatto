@@ -1,11 +1,11 @@
 {
   "name": "formatto",
   "displayName": "Formatto for VS Code",
-  "description": "Formats Ruby files using rubyfmt.",
+  "description": "A flexible Ruby formatter for VS Code, supporting rubyfmt and rufo.",
   "author": "damolinx",
   "publisher": "damolinx",
   "license": "Apache-2.0",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "icon": "icon.png",
   "repository": {
     "type": "git",
@@ -18,14 +18,16 @@
     "workspace"
   ],
   "categories": [
-    "Formatters"
+    "Formatters",
+    "Programming Languages"
   ],
   "keywords": [
     "format",
     "formatter",
     "multi-root",
     "ruby",
-    "rubyfmt"
+    "rubyfmt",
+    "rufo"
   ],
   "activationEvents": [
     "onLanguage:ruby"
@@ -40,37 +42,79 @@
         "enablement": "gitOpenRepositoryCount > 0"
       }
     ],
-    "configuration": {
-      "title": "Formatto",
-      "properties": {
-        "formatto.enableRangeFormatting": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
-        },
-        "formatto.rubyfmtArgs": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
+    "configuration": [
+      {
+        "title": "Formatto",
+        "properties": {
+          "formatto.formatter": {
+            "type": "string",
+            "default": "rubyfmt",
+            "enum": [
+              "rubyfmt",
+              "rufo"
+            ],
+            "description": "Select which formatter Formatto should use."
           },
-          "markdownDescription": "Additional arguments to pass to `rubyfmt`, one argument per entry. Use `rubyfmt --help` to check for available flags."
-        },
-        "formatto.rubyfmtPath": {
-          "scope": "resource",
-          "type": "string",
-          "default": "rubyfmt",
-          "markdownDescription": "Path to the rubyfmt executable. The following tokens are available:\n\n- `${userHome}`: User home directory.\n- `${workspaceFolder}`: Current workspace root directory.\n\nIf the value is a bare command (e.g. `rubyfmt`), it will be resolved from the current environment's PATH.",
-          "pattern": "^\\S*$",
-          "patternErrorMessage": "Value must be empty, or a valid path"
-        },
-        "formatto.verifyRubyfmt": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Verify that `rubyfmt` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.rubyfmtPath%22%5D)."
+          "formatto.enableRangeFormatting": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
+          }
+        }
+      },
+      {
+        "title": "Rubyfmt",
+        "properties": {
+          "formatto.rubyfmtArgs": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "markdownDescription": "Additional arguments to pass to `rubyfmt`, one argument per entry. Use `rubyfmt --help` to check for available flags."
+          },
+          "formatto.rubyfmtPath": {
+            "scope": "resource",
+            "type": "string",
+            "default": "rubyfmt",
+            "markdownDescription": "Path to the `rubyfmt` executable. The following tokens are available:\n\n- `${userHome}`: User home directory.\n- `${workspaceFolder}`: Current workspace root directory.\n\nIf the value is a bare command (e.g. `rubyfmt`), it will be resolved from the current environment's PATH.",
+            "pattern": "^\\S*$",
+            "patternErrorMessage": "Value must be empty, or a valid path"
+          },
+          "formatto.verifyRubyfmt": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Verify that `rubyfmt` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.rubyfmtPath%22%5D)."
+          }
+        }
+      },
+      {
+        "title": "Rufo",
+        "properties": {
+          "formatto.rufoArgs": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "markdownDescription": "Additional arguments to pass to `rufo`, one argument per entry. Use `rufo --help` to check for available flags."
+          },
+          "formatto.rufoPath": {
+            "scope": "resource",
+            "type": "string",
+            "default": "rufo",
+            "markdownDescription": "Path to the `rufo` executable. The following tokens are available:\n\n- `${userHome}`: User home directory.\n- `${workspaceFolder}`: Current workspace root directory.\n\nIf the value is a bare command (e.g. `rufo`), it will be resolved from the current environment's PATH.",
+            "pattern": "^\\S*$",
+            "patternErrorMessage": "Value must be empty, or a valid path"
+          },
+          "formatto.verifyRufo": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Verify that `rufo` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.rufoPath%22%5D)."
+          }
         }
       }
-    }
+    ]
   },
   "scripts": {
     "compile": "npm run ts:check-types && npm run ts:compile",
@@ -83,11 +127,10 @@
     "vscode:prepublish": "npm run ts:check-types && node esbuild.mjs --production",
     "watch": "npm run ts:watch"
   },
-  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^9.37.0",
     "@stylistic/eslint-plugin": "^5.4.0",
-    "@types/node": "^20.18.0",
+    "@types/node": "^22",
     "@types/vscode": "~1.105",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.46.0",

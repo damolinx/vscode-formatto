@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+- Add support for configurable, multi-root aware formatter backends.
+- Add **Rufo** as a formatter option using the new backend system.
+
 ## 0.2.3
 - Logging improvement.
 - Fix: **Format Pending Changes** command missed applying the update. 
