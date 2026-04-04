@@ -28,7 +28,7 @@ export async function verifyFormatter(
   );
 
   const selection = await vscode.window.showWarningMessage(
-    `Ccould not run formatter as '${resolvedCmd}'. It may be missing or incompatible with this system.`,
+    `Could not run formatter '${resolvedCmd}'. The formatter may be missing or incompatible with this system.`,
     'Install',
     'Configure',
     "Don't ask again",
