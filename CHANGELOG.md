@@ -2,7 +2,7 @@
 
 ## 0.3.1
 - Update README
-- Fix: **Don't ask me again** during verification uses an incorrectly cased setting name.
+- Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
 
 ## 0.3.0
 - Add support for configurable, multi-root aware formatter backends.
