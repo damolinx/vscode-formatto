@@ -16,7 +16,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
  * the indentation. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
-  constructor(private readonly context: ExtensionContext) {}
+  constructor(private readonly context: ExtensionContext) { }
 
   async provideDocumentRangeFormattingEdits(
     document: vscode.TextDocument,
@@ -29,13 +29,19 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     }
 
     const formatter = this.context.formatters.getFor(document.uri);
-    const formattedText = await formatter.tryFormatText(document, range, token);
+    let formattedText = await formatter.tryFormatText(document, range, token);
     if (!formattedText) {
       this.context.log.debug(
         'RangeFormat: No changes to apply',
         vscode.workspace.asRelativePath(document.uri),
       );
       return;
+    }
+
+    if (formatter.descriptor.injectsTrailingNewline) {
+      if ((range.end.line === (document.lineCount - 1)) && formattedText.endsWith('\n')) {
+        formattedText = formattedText.slice(0, -1);
+      }
     }
 
     const indentation = RangeFormattingEditProvider.getIndentOfFirstNonEmptyLine(document, range);

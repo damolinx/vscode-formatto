@@ -6,6 +6,7 @@ import { FormatterDescriptor } from './types';
 
 export const RufoDescriptor: FormatterDescriptor = {
   id: 'rufo',
+  injectsTrailingNewline: true,
   installUrl: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation',
   versionArgs: ['--version'],
 };

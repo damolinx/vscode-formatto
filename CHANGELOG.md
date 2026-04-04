@@ -5,6 +5,7 @@
 - Formatter verification runs only until the formatter is successfully detected.
 - Fix: Formatter executions now enforce a 5‑second timeout to prevent hangs.
 - Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
+- Fix: **Format Selection** injects a trailing newline.
 
 ## 0.3.0
 - Add support for configurable, multi-root aware formatter backends.

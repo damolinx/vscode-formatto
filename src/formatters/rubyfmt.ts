@@ -6,6 +6,7 @@ import { FormatterDescriptor } from './types';
 
 export const RubyfmtDescriptor: FormatterDescriptor = {
   id: 'rubyfmt',
+  injectsTrailingNewline: true,
   installUrl: 'https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation',
   versionArgs: ['--version'],
 };
