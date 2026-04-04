@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { verifyFormatter } from '../commands/verifyRubyfmt';
+import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from './formatter';
 import { FormatterDescriptor } from './types';
