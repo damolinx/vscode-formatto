@@ -41,7 +41,7 @@ export abstract class Formatter {
     return this.descriptor.id;
   }
 
-  protected isSuccessCode(code: number): boolean {
+  protected isSuccessCode(code: number | null): boolean {
     return code === 0;
   }
 
@@ -54,11 +54,9 @@ export abstract class Formatter {
     const { args = [], cmd = this.getFormatterCommand(uri), cwd = this.getCwd(uri) } = options;
     const mergedArgs = [...args, ...this.getFormatterArgs(uri)];
 
-    this.context.log.info(
-      `Running: '${cmd} ${mergedArgs.join(' ')}'${cwd ? ` - Cwd: ${cwd}` : ''}`,
-    );
+    this.context.log.info(`Running: '${cmd} ${mergedArgs.join(' ')}'${cwd ? ` Cwd: ${cwd}` : ''}`);
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(cmd, mergedArgs, { cwd, stdio: 'pipe' });
+      const child = spawn(cmd, mergedArgs, { cwd, shell: false, stdio: 'pipe', timeout: 5000 });
       const cancelSubscription = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
         reject(new Error('Formatting canceled'));
@@ -69,24 +67,25 @@ export abstract class Formatter {
 
       child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
       child.stderr.on('data', (chunk) => (stderr += chunk.toString()));
-      child.on('error', (err) => reject(new Error(err.message, { cause: err })));
+      child.on('error', (error) => reject(new Error(error.message, { cause: error })));
 
       child.on('close', (code) => {
         cancelSubscription?.dispose();
-
         if (token?.isCancellationRequested) {
           return;
         }
 
-        if (code !== null && this.isSuccessCode(code)) {
+        if (this.isSuccessCode(code)) {
           resolve(stdout);
         } else {
-          reject(new Error(`${this.id} exited with code ${code}: ${stderr.trim()}`));
+          const message = child.killed
+            ? `${cmd} was killed. This can happen if allowed runtime was exceeded.`
+            : `${cmd} exited${code !== null ? ` with code ${code}` : ''}: ${stderr.trim()}`;
+          reject(new Error(message));
         }
       });
 
-      child.stdin.write(text);
-      child.stdin.end();
+      child.stdin.end(text);
     });
   }
 
@@ -95,7 +94,7 @@ export abstract class Formatter {
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
-    this.context.log.info(`${this.id}: Format selection. Path: '${path}'`);
+    this.context.log.info(`${this.id}: Format document. Path: '${path}'`);
 
     let formattedText: string | undefined;
     try {

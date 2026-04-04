@@ -2,7 +2,9 @@ import * as vscode from 'vscode';
 import { execFile, ExecFileException } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
 import { FormatterOptions } from '../formatters/formatter';
-import { FormatterDescriptor } from '../formatters/types';
+import { FormatterDescriptor, FormatterName } from '../formatters/types';
+
+const verified = new Set<FormatterName>();
 
 export async function verifyFormatter(
   context: ExtensionContext,
@@ -15,17 +17,22 @@ export async function verifyFormatter(
     return true;
   }
 
-  const resolvedCmd = options.cmd ?? context.configuration.getFormatterPath(descriptor.id, scope);
+  if (verified.has(descriptor.id)) {
+    context.log.debug(`Verify(${descriptor.id}): Skipped verification (already verified)`);
+    return true;
+  }
 
+  const resolvedCmd = options.cmd ?? context.configuration.getFormatterPath(descriptor.id, scope);
   const result = await isAvailable(resolvedCmd, options.cwd, descriptor.versionArgs);
   if (result.version) {
+    verified.add(descriptor.id);
     context.log.info(`${descriptor.id}: ${resolvedCmd} - Version: ${result.version}`);
     return true;
   }
 
   const code = result.error?.code ?? result.error?.name ?? 'unknown';
   const message = result.error?.message ? `: ${result.error.message}` : '';
-  context.log.error(`Verify(${descriptor.id}): ${resolvedCmd} - Error: ${code}${message}`);
+  context.log.error(`Verify: ${resolvedCmd} - ${code}${message}`);
 
   const selection = await vscode.window.showWarningMessage(
     `Could not run formatter '${resolvedCmd}'. The formatter may be missing or incompatible with this system.`,
@@ -58,14 +65,23 @@ export async function verifyFormatter(
 }
 
 async function isAvailable(
-  command: string,
+  cmd: string,
   cwd?: string,
   args: string[] = [],
 ): Promise<{ error?: ExecFileException; version?: string }> {
   return new Promise((resolve) => {
-    execFile(command, args, { cwd }, (error, stdout) => {
+    execFile(cmd, args, { cwd, timeout: 5000 }, (error, stdout) => {
       if (error) {
-        resolve({ error });
+        if (error.killed) {
+          resolve({
+            error: new Error(
+              `Command was killed: ${cmd}${args.length ? ` ${args.join(' ')}` : ''}`,
+              { cause: error },
+            ),
+          });
+        } else {
+          resolve({ error });
+        }
       } else {
         resolve({ version: stdout?.trim() || 'unknown' });
       }

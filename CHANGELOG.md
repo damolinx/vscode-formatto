@@ -1,7 +1,9 @@
 # Changelog
 
 ## 0.3.1
-- Update README
+- Update README.
+- Formatter verification runs only until the formatter is successfully detected.
+- Fix: Formatter executions now enforce a 5‑second timeout to prevent hangs.
 - Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
 
 ## 0.3.0
