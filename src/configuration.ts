@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX } from './constants';
-import { FormatterName } from './formatters/types';
+import { capitalizeFormatterName, FormatterName } from './formatters/types';
 import { resolveTokenizedPath } from './utils/pathTokenization';
 
 export class Configuration {
@@ -49,13 +49,18 @@ export class Configuration {
     return this.resolveValue('enableRangeFormatting', false);
   }
 
+  public formatterPathKey(formatter: FormatterName, withPrefix = false): string {
+    const key = `${formatter}Path`;
+    return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
+  }
+
   /**
    * Get the configured formatter name.
    */
   public getFormatterName(
     scope: vscode.ConfigurationScope | undefined,
     defaultValue: FormatterName = 'rubyfmt',
-  ) {
+  ): FormatterName {
     return this.getValue<FormatterName>(scope, 'formatter', defaultValue);
   }
 
@@ -74,7 +79,7 @@ export class Configuration {
     scope?: vscode.Uri,
     resolveTokens = true,
   ): string {
-    const rawValue = this.getValue(scope, `${formatter}Path`, 'rubyfmt');
+    const rawValue = this.getValue(scope, this.formatterPathKey(formatter), formatter);
     return resolveTokens ? resolveTokenizedPath(rawValue, scope) : rawValue;
   }
 
@@ -83,7 +88,7 @@ export class Configuration {
    * is reachable.
    */
   public shouldVerifyFormatter(formatter: FormatterName): boolean {
-    return this.resolveValue(`verify${formatter}`, true);
+    return this.resolveValue(this.verifyFormatterKey(formatter), true);
   }
 
   /**
@@ -95,6 +100,15 @@ export class Configuration {
     value: boolean,
     configurationTarget = vscode.ConfigurationTarget.Global,
   ): Promise<void> {
-    await this.getConfiguration().update(`verify${formatter}`, value, configurationTarget);
+    await this.getConfiguration().update(
+      this.verifyFormatterKey(formatter),
+      value,
+      configurationTarget,
+    );
+  }
+
+  public verifyFormatterKey(formatter: FormatterName, withPrefix = false): string {
+    const key = `verify${capitalizeFormatterName(formatter)}`;
+    return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
   }
 }

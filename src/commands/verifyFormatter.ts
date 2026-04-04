@@ -11,7 +11,7 @@ export async function verifyFormatter(
   descriptor: FormatterDescriptor,
 ): Promise<boolean> {
   if (!context.configuration.shouldVerifyFormatter(descriptor.id)) {
-    context.log.info(`${descriptor.id}: Skipped verification`);
+    context.log.info(`Verify(${descriptor.id}): Skipped verification (disabled by user setting)`);
     return true;
   }
 
@@ -23,9 +23,9 @@ export async function verifyFormatter(
     return true;
   }
 
-  context.log.error(
-    `${descriptor.id}: ${resolvedCmd} - ${result.error?.code || result.error?.name}`,
-  );
+  const code = result.error?.code ?? result.error?.name ?? 'unknown';
+  const message = result.error?.message ? `: ${result.error.message}` : '';
+  context.log.error(`Verify(${descriptor.id}): ${resolvedCmd} - Error: ${code}${message}`);
 
   const selection = await vscode.window.showWarningMessage(
     `Could not run formatter '${resolvedCmd}'. The formatter may be missing or incompatible with this system.`,
@@ -42,12 +42,15 @@ export async function verifyFormatter(
     case 'Configure':
       vscode.commands.executeCommand(
         'workbench.action.openSettings',
-        `formatto.${descriptor.id}Path`,
+        context.configuration.formatterPathKey(descriptor.id),
       );
       break;
 
     case "Don't ask again":
       await context.configuration.updateVerifyFormatter(descriptor.id, false);
+      context.log.info(
+        `Verify(${descriptor.id}): Disabled by ${context.configuration.verifyFormatterKey(descriptor.id, true)} setting.`,
+      );
       break;
   }
 

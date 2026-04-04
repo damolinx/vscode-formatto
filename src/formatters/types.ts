@@ -5,3 +5,7 @@ export interface FormatterDescriptor {
   readonly installUrl: string;
   readonly versionArgs?: string[];
 }
+
+export function capitalizeFormatterName(id: FormatterName): string {
+  return id.charAt(0).toUpperCase() + id.slice(1);
+}
