@@ -49,7 +49,7 @@ The `formatto.«formatter»Path` values default to their executable name, e.g. `
 
 | Setting | Description |
 |--------|-------------|
-| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--prism` |
+| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--header-opt-in` |
 | `formatto.rubyfmtPath` | Path to `rubyfmt`. Defaults to `rubyfmt` |
 | `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before running the formatter |
 
