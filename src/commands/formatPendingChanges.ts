@@ -42,6 +42,7 @@ async function formatRepoPendingChanges(
   const changed = [...repo.state.workingTreeChanges, ...repo.state.indexChanges];
   const uris = changed.map((change) => change.uri).filter((uri) => uri.fsPath.endsWith('.rb'));
   if (uris.length === 0) {
+    context.log.debug(`ChangesFormat: No Ruby changes in '${repoDisplayId}'`);
     return;
   }
 
