@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
+import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
     vscode.languages.registerDocumentFormattingEditProvider(
-      'ruby',
+      DOCUMENT_SELECTOR,
       new DocumentFormattingEditProvider(context),
     ),
   );

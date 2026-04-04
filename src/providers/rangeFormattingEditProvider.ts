@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
+import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
     vscode.languages.registerDocumentRangeFormattingEditProvider(
-      'ruby',
+      DOCUMENT_SELECTOR,
       new RangeFormattingEditProvider(context),
     ),
   );
@@ -16,7 +17,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
  * the indentation. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
-  constructor(private readonly context: ExtensionContext) { }
+  constructor(private readonly context: ExtensionContext) {}
 
   async provideDocumentRangeFormattingEdits(
     document: vscode.TextDocument,
@@ -39,7 +40,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     }
 
     if (formatter.descriptor.injectsTrailingNewline) {
-      if ((range.end.line === (document.lineCount - 1)) && formattedText.endsWith('\n')) {
+      if (range.end.line === document.lineCount - 1 && formattedText.endsWith('\n')) {
         formattedText = formattedText.slice(0, -1);
       }
     }

@@ -3,6 +3,7 @@
 ## 0.3.1
 - Update README.
 - Formatter verification runs only until the formatter is successfully detected.
+- Declare `gemfile` as supported language. 
 - Fix: Formatter executions now enforce a 5‑second timeout to prevent hangs.
 - Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
 - Fix: **Format Selection** injects a trailing newline.
