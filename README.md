@@ -31,7 +31,7 @@ Once configured, use the built‑in **Format Document** command, or enable **Edi
   - It remains as the default purely for backward compatibility, since Formatto originally shipped with support for rubyfmt only.
 - **rufo** supports `.rufo` configuration and offers customizable formatting style.
 
-[↑ Back to top](#formatto-for-vs-code)
+[↑ Back to top](#formatto)
 
 ## Configuration
 
@@ -63,7 +63,7 @@ The `formatto.«formatter»Path` values default to their executable name, e.g. `
 
 Additionally, note that Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
 
-[↑ Back to top](#formatto-for-vs-code)
+[↑ Back to top](#formatto)
 
 ## Commands
 
@@ -73,7 +73,7 @@ Use the **Formatto: Format Pending Changes** command to format all modified Ruby
 
 This command is available only when at least one Git repository is open in the workspace.
 
-[↑ Back to top](#formatto-for-vs-code)
+[↑ Back to top](#formatto)
 
 ### Format Selection
 
@@ -85,7 +85,7 @@ This feature is **experimental**, and results may not match **Format Document** 
 
 If you understand the limitations, this feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart.
 
-[↑ Back to top](#formatto-for-vs-code)
+[↑ Back to top](#formatto)
 
 ## Logs
 
@@ -93,4 +93,4 @@ Formatto writes diagnostic information to the **Formatto** output channel.
 You can adjust the log level using **Developer: Set Log Level** and selecting **Formatto**.
 See [documentation](https://code.visualstudio.com/updates/v1_73#_setting-log-level-per-output-channel) for details.
 
-[↑ Back to top](#formatto-for-vs-code)
+[↑ Back to top](#formatto)
