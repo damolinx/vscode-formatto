@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.0
+- Simplify extension name to **Formatto**
+
 ## 0.3.1
 - Update README.
 - Formatter verification runs only until the formatter is successfully detected.

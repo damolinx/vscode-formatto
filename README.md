@@ -1,4 +1,4 @@
-# Formatto for VS Code
+# Formatto
 
 Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt) and [rufo](https://github.com/ruby-formatter/rufo). Formatto is fully **multi‑root** aware, formatters can be fully configured per workspace folder.
 

@@ -49,6 +49,10 @@ export class Configuration {
     return this.resolveValue('enableRangeFormatting', false);
   }
 
+  /**
+   * Get the configuration key for a formatter's executable path.
+   * @param withPrefix Whether to include the extension prefix.
+   */
   public formatterPathKey(formatter: FormatterName, withPrefix = false): string {
     const key = `${formatter}Path`;
     return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;

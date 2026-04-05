@@ -1,6 +1,6 @@
 {
   "name": "formatto",
-  "displayName": "Formatto for VS Code",
+  "displayName": "Formatto",
   "description": "A flexible Ruby formatter for VS Code, supporting rubyfmt and rufo.",
   "author": "damolinx",
   "publisher": "damolinx",
