@@ -18,11 +18,11 @@ export function activate(extensionContext: vscode.ExtensionContext) {
   registerDocumentFormattingEditProvider(context);
 
   if (context.configuration.enableRangeFormatting) {
-    context.log.info("RangeFormat: Enabled by setting 'formatto.enableRangeFormatting'");
+    context.log.info("RangeFormat: Enabled. Setting: 'formatto.enableRangeFormatting'");
     registerRangeFormattingEditProvider(context);
   } else {
     context.log.info(
-      "RangeFormat: Disabled by default or setting 'formatto.enableRangeFormatting'",
+      "RangeFormat: Disabled. Setting: 'formatto.enableRangeFormatting'",
     );
   }
 }
