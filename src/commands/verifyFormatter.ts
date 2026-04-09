@@ -13,7 +13,7 @@ export async function verifyFormatter(
   descriptor: FormatterDescriptor,
 ): Promise<boolean> {
   if (!context.configuration.shouldVerifyFormatter(descriptor.id)) {
-    context.log.info(`Verify(${descriptor.id}): Skipped verification (disabled by user setting)`);
+    context.log.info(`Verify(${descriptor.id}): Skipped verification (disabled by setting)`);
     return true;
   }
 
