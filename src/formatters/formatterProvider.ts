@@ -3,6 +3,7 @@ import { ExtensionContext } from '../extensionContext';
 import { Formatter } from './formatter';
 import { RubyfmtFormatter } from './rubyfmt';
 import { RufoFormatter } from './rufo';
+import { StandardRbFormatter } from './standardrb';
 import { FormatterName } from './types';
 
 export class FormatterProvider {
@@ -18,14 +19,11 @@ export class FormatterProvider {
         return new RubyfmtFormatter(this.context);
       case 'rufo':
         return new RufoFormatter(this.context);
+      case 'standardrb':
+        return new StandardRbFormatter(this.context);
       default:
         throw new Error(`Unknown formatter: ${name satisfies never}`);
     }
-  }
-
-  public getFor(uri: vscode.Uri): Formatter {
-    const name = this.context.configuration.getFormatterName(uri);
-    return this.get(name);
   }
 
   public get(name: FormatterName): Formatter {
@@ -35,5 +33,10 @@ export class FormatterProvider {
       this.cachedFormatters.set(name, instance);
     }
     return instance;
+  }
+
+  public getFor(uri: vscode.Uri): Formatter {
+    const name = this.context.configuration.getFormatterName(uri);
+    return this.get(name);
   }
 }

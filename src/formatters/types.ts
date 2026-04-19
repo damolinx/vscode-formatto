@@ -1,4 +1,4 @@
-export type FormatterName = 'rubyfmt' | 'rufo';
+export type FormatterName = 'rubyfmt' | 'rufo' | 'standardrb';
 
 export interface FormatterDescriptor {
   readonly id: FormatterName;

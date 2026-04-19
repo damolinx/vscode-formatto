@@ -19,6 +19,7 @@ export class RubyfmtFormatter extends Formatter {
   public override async formatText(
     { uri }: vscode.TextDocument,
     text: string,
+    _isRange?: boolean,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const options = {

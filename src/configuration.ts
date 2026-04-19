@@ -16,13 +16,13 @@ export class Configuration {
    * @param section — Configuration name, supports dotted names.
    * @param defaultValue — Value returned if the setting is not defined.
    */
-  private getValue<T>(scope: vscode.ConfigurationScope | undefined, section: string): T | undefined;
-  private getValue<T>(
+  public getValue<T>(scope: vscode.ConfigurationScope | undefined, section: string): T | undefined;
+  public getValue<T>(
     scope: vscode.ConfigurationScope | undefined,
     section: string,
     defaultValue: T,
   ): T;
-  private getValue<T>(
+  public getValue<T>(
     scope: vscode.ConfigurationScope | undefined,
     section: string,
     defaultValue?: T,

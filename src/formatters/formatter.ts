@@ -21,6 +21,7 @@ export abstract class Formatter {
   abstract formatText(
     document: vscode.TextDocument,
     text: string,
+    isRange?: boolean,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined>;
 
@@ -98,7 +99,7 @@ export abstract class Formatter {
 
     let formattedText: string | undefined;
     try {
-      formattedText = await this.formatText(document, document.getText(), token);
+      formattedText = await this.formatText(document, document.getText(), false, token);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : (error?.toString() ?? 'no error message');
@@ -118,7 +119,7 @@ export abstract class Formatter {
 
     let formattedText: string | undefined;
     try {
-      formattedText = await this.formatText(document, document.getText(range), token);
+      formattedText = await this.formatText(document, document.getText(range), true, token);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : (error?.toString() ?? 'no error message');

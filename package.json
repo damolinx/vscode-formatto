@@ -1,7 +1,7 @@
 {
   "name": "formatto",
   "displayName": "Formatto",
-  "description": "A flexible Ruby formatter for VS Code, supporting rubyfmt and rufo.",
+  "description": "A flexible Ruby formatter for VS Code, supporting rubyfmt, rufo and standardrb.",
   "author": "damolinx",
   "publisher": "damolinx",
   "license": "Apache-2.0",
@@ -30,7 +30,8 @@
     "multi-root",
     "ruby",
     "rubyfmt",
-    "rufo"
+    "rufo",
+    "standardrb"
   ],
   "extensionPack": [
     "damolinx.tracciatto"
@@ -56,7 +57,8 @@
             "default": "rubyfmt",
             "enum": [
               "rubyfmt",
-              "rufo"
+              "rufo",
+              "standardrb"
             ],
             "description": "Select which formatter Formatto should use."
           },
@@ -116,6 +118,49 @@
             "type": "boolean",
             "default": true,
             "markdownDescription": "Verify that `rufo` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.rufoPath%22%5D)."
+          }
+        }
+      },
+      {
+        "title": "Standard Ruby",
+        "properties": {
+          "formatto.standardRubyArgs": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "markdownDescription": "Additional arguments to pass to `standardrb`, one argument per entry. Use `standardrb --help` to check for available flags."
+          },
+          "formatto.standardRubyFormattingMode": {
+            "type": "string",
+            "enum": [
+              "tmpFile",
+              "forceSave"
+            ],
+            "enumItemLabels": [
+              "Use temporary file",
+              "Force-save editor"
+            ],
+            "default": "tmpFile",
+            "markdownEnumDescriptions": [
+              "Write the current editor contents to a temporary file, format and apply changes back.",
+              "Force-save the current editor to disk before formatting."
+            ],
+            "markdownDescription": "`standardrb` can only format files on disk, so Formatto satisfies this requirement using the selected behavior whenever the target editor has pending changes."
+          },
+          "formatto.standardRubyPath": {
+            "scope": "resource",
+            "type": "string",
+            "default": "standardrb",
+            "markdownDescription": "Path to the `standardrb` executable. The following tokens are available:\n\n- `${userHome}`: User home directory.\n- `${workspaceFolder}`: Current workspace root directory.\n\nIf the value is a bare command (e.g. `standardrb`), it will be resolved from the current environment's PATH.",
+            "pattern": "^\\S*$",
+            "patternErrorMessage": "Value must be empty, or a valid path"
+          },
+          "formatto.verifyStandardRuby": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Verify that `standardRubyPath` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.standardRubyPath%22%5D)."
           }
         }
       }

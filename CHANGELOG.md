@@ -2,6 +2,8 @@
 
 ## 0.4.0
 - Simplify extension name to **Formatto**
+- Add **Standard Ruby** as a formatter.
+
 
 ## 0.3.1
 - Update README.
