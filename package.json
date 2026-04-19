@@ -32,6 +32,9 @@
     "rubyfmt",
     "rufo"
   ],
+  "extensionPack": [
+    "damolinx.tracciatto"
+  ],
   "activationEvents": [
     "onLanguage:ruby"
   ],
