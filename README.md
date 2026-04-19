@@ -60,6 +60,7 @@ The `formatto.«formatter»Path` values default to their executable name, e.g. `
 |---------|-------------|---------|
 | `formatto.rufoArgs` | Additional arguments to pass to `rufo`. | |
 | `formatto.rufoPath` | Path to `rufo`. | `rufo` |
+| `formatto.rufoPreferBundler` | Use `bundle exec` to run `rufo`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before running the formatter. | `true` |
 
 Additionally, note that Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
@@ -70,12 +71,13 @@ Additionally, note that Rufo automatically loads [`.rufo` configuration files](h
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `formatto.standardRubyArgs` | Additional arguments to pass to `standardrb`. | |
-| `formatto.standardRubyPath` | Path to `standardrb`. | `standardrb` |
-| `formatto.standardRubyFormattingMode` | Controls how Formatto satisfies StandardRB's requirement to operate on real files. | `tmpFile` |
-| `formatto.verifyStandardRuby` | Verify that `standardrb` is available before running the formatter. | `true` |
+| `formatto.standardrbArgs` | Additional arguments to pass to `standardrb`. | |
+| `formatto.standardrbFormattingMode` | Controls how Formatto satisfies StandardRB's requirement to operate on real files. | `tmpFile` |
+| `formatto.standardrbPath` | Path to `standardrb`. | `standardrb` |
+| `formatto.standardrbPreferBundler` | Use `bundle exec` to run `standardrb`. | `false` |
+| `formatto.verifyStandardrb` | Verify that `standardrb` is available before running the formatter. | `true` |
 
-*Standard Ruby* is different from *rubyfmt* and *Rufo* as it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardRubyFormattingMode` setting):
+*Standard Ruby* is different from *rubyfmt* and *Rufo* as it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
 
 * *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional filesystem operations, but avoids an unexpected save of the document and is therefore the default behavior.
 * *forceSave*: saves the document to disk before formatting it. This is not the default mode because it changes standard formatter behavior, but it may be preferred in workflows where on‑disk state must always reflect the formatted result.

@@ -52,7 +52,14 @@ export abstract class Formatter {
     options: FormatterOptions,
     token?: vscode.CancellationToken,
   ): Promise<string> {
-    const { args = [], cmd = this.getFormatterCommand(uri), cwd = this.getCwd(uri) } = options;
+    const { args = [], cwd = this.getCwd(uri) } = options;
+    let cmd = options.cmd ?? this.getFormatterCommand(uri);
+
+    const useBundler = this.context.configuration.getPreferBundler(this.id, uri);
+    if (useBundler) {
+      args.unshift('exec', cmd);
+      cmd = 'bundle';
+    }
     const mergedArgs = [...args, ...this.getFormatterArgs(uri)];
 
     this.context.log.info(`Running: '${cmd} ${mergedArgs.join(' ')}'${cwd ? ` Cwd: ${cwd}` : ''}`);
@@ -76,7 +83,7 @@ export abstract class Formatter {
           return;
         }
 
-        if (this.isSuccessCode(code)) {
+        if (this.isSuccessCode(code) && isBundlerSuccess(stderr)) {
           resolve(stdout);
         } else {
           const message = child.killed
@@ -88,6 +95,10 @@ export abstract class Formatter {
 
       child.stdin.end(text);
     });
+
+    function isBundlerSuccess(stderr: string) {
+      return !useBundler || stderr.length === 0;
+    }
   }
 
   public async tryFormatDocument(

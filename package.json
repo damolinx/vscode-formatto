@@ -114,6 +114,11 @@
             "pattern": "^\\S*$",
             "patternErrorMessage": "Value must be empty, or a valid path"
           },
+          "formatto.rufoPreferBundler": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Prefer running `rufo` via `bundle exec` when a Gemfile is present and no explicit `formatto.rufoPath` is set."
+          },
           "formatto.verifyRufo": {
             "type": "boolean",
             "default": true,
@@ -124,7 +129,7 @@
       {
         "title": "Standard Ruby",
         "properties": {
-          "formatto.standardRubyArgs": {
+          "formatto.standardrbArgs": {
             "type": "array",
             "default": [],
             "items": {
@@ -132,7 +137,7 @@
             },
             "markdownDescription": "Additional arguments to pass to `standardrb`, one argument per entry. Use `standardrb --help` to check for available flags."
           },
-          "formatto.standardRubyFormattingMode": {
+          "formatto.standardrbFormattingMode": {
             "type": "string",
             "enum": [
               "tmpFile",
@@ -149,7 +154,7 @@
             ],
             "markdownDescription": "`standardrb` can only format files on disk, so Formatto satisfies this requirement using the selected behavior whenever the target editor has pending changes."
           },
-          "formatto.standardRubyPath": {
+          "formatto.standardrbPath": {
             "scope": "resource",
             "type": "string",
             "default": "standardrb",
@@ -157,10 +162,15 @@
             "pattern": "^\\S*$",
             "patternErrorMessage": "Value must be empty, or a valid path"
           },
-          "formatto.verifyStandardRuby": {
+          "formatto.standardrbPreferBundler": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Prefer running `standardrb` via `bundle exec`."
+          },
+          "formatto.verifyStandardrb": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "Verify that `standardRubyPath` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.standardRubyPath%22%5D)."
+            "markdownDescription": "Verify that `standardrbPath` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.standardrbPath%22%5D)."
           }
         }
       }

@@ -119,7 +119,7 @@ export class StandardRbFormatter extends Formatter {
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
           uri,
-          'standardRubyFormattingMode',
+          'standardrbFormattingMode',
           'tmpFile',
         );
   }

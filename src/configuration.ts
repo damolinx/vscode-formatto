@@ -88,6 +88,22 @@ export class Configuration {
   }
 
   /**
+   * Whether to run with `bundle exec`.
+   */
+  public getPreferBundler(formatter: FormatterName, scope?: vscode.Uri): boolean {
+    return this.getValue(scope, this.preferBundlerKey(formatter), false);
+  }
+
+  /**
+   * Get the configuration key to `preferBundler` setting.
+   * @param withPrefix Whether to include the extension prefix.
+   */
+  public preferBundlerKey(formatter: FormatterName, withPrefix = false): string {
+    const key = `${formatter}PreferBundler`;
+    return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
+  }
+
+  /**
    * Whether formatter should verify that resolved {@link getFormatterPath path}
    * is reachable.
    */
