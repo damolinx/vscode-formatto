@@ -1,6 +1,6 @@
 # Formatto
 
-Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt) and [rufo](https://github.com/ruby-formatter/rufo). Formatto is fully **multi‑root** aware, formatters can be fully configured per workspace folder.
+Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo) and [standardrb](https://github.com/standardrb/standard). Formatto is fully **multi‑root** aware, formatters can be fully configured per workspace folder.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -31,6 +31,7 @@ Once configured, use the built‑in **Format Document** command, or enable **Edi
 - **rubyfmt** provides deterministic, configuration‑free formatting.
   - It remains as the default purely for backward compatibility, since Formatto originally shipped with support for rubyfmt only.
 - **rufo** supports `.rufo` configuration and offers customizable formatting style.
+- **standardrb** also provides provides deterministic, configuration‑free formatting based on RuboCop rules but because of that, it is more than just a formatter.
 
 [↑ Back to top](#table-of-contents)
 
