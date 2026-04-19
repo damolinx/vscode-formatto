@@ -111,6 +111,10 @@ export class Configuration {
     );
   }
 
+  /**
+   * Get the configuration key to toggle formatter's verification.
+   * @param withPrefix Whether to include the extension prefix.
+   */
   public verifyFormatterKey(formatter: FormatterName, withPrefix = false): string {
     const key = `verify${capitalizeFormatterName(formatter)}`;
     return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;

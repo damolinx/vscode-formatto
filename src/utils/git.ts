@@ -1,14 +1,15 @@
 import * as vscode from 'vscode';
-import type { API as GitAPI } from '../../typings/git';
-import { ExtensionContext } from '../extensionContext';
+import type { API } from '../../typings/git';
 
-export function getGitApi({ log }: ExtensionContext): GitAPI | undefined {
-  const gitExtension = vscode.extensions.getExtension('vscode.git');
+interface GitExtension {
+  getAPI(version: number): API;
+}
+
+export function getGitApi(): API | undefined {
+  const gitExtension = vscode.extensions.getExtension<GitExtension>('vscode.git');
   if (!gitExtension) {
-    log.warn('Git: vscode.git extension missing or failed to load.');
     return;
   }
 
-  const git = gitExtension.exports as { getAPI(version: number): GitAPI };
-  return git.getAPI(1);
+  return gitExtension.exports.getAPI(1);
 }

@@ -5,18 +5,18 @@ import { getGitApi } from '../utils/git';
 import { normalizeForDisplay } from '../utils/uri';
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
-  const api = getGitApi(context);
+  const api = getGitApi();
   if (!api) {
     const msg = 'Git support is unavailable';
     vscode.window.showWarningMessage(msg);
-    context.log.debug('ChangesFormat:', msg);
+    context.log.warn('ChangesFormat:', msg);
     return;
   }
 
   if (api.repositories.length === 0) {
     const msg = 'No repositories found in workspace.';
     vscode.window.showWarningMessage(msg);
-    context.log.debug('ChangesFormat:', msg);
+    context.log.info('ChangesFormat:', msg);
     return;
   }
 
@@ -25,7 +25,7 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     api.repositories.map(async (repo) => {
       const repoDisplayId = normalizeForDisplay(repo.rootUri);
       if (token.isCancellationRequested) {
-        context.log.debug(`ChangesFormat: Cancelled before processing '${repoDisplayId}' repo`);
+        context.log.debug(`ChangesFormat: Canceled before processing '${repoDisplayId}' repo`);
         return;
       }
       await formatRepoPendingChanges(context, repo, repoDisplayId, token);
@@ -48,7 +48,7 @@ async function formatRepoPendingChanges(
 
   for (const uri of uris) {
     if (token.isCancellationRequested) {
-      context.log.debug(`ChangesFormat: Cancelled while processing '${repoDisplayId}' repo`);
+      context.log.debug(`ChangesFormat: Canceled while processing '${repoDisplayId}' repo`);
       return;
     }
     const document = await vscode.workspace.openTextDocument(uri);
