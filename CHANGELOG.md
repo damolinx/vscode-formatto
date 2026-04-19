@@ -3,7 +3,7 @@
 ## 0.4.0
 - Simplify extension name to **Formatto**
 - Add **Standard Ruby** as a formatter.
-
+- Add `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings to use `bundle exec` to run the formatter.
 
 ## 0.3.1
 - Update README.
