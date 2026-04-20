@@ -16,11 +16,10 @@ Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://g
 ## Getting Started
 
 1. Choose which formatter you want to use: **rubyfmt** or **rufo**.  
-   - By default, **rubyfmt** is used, so no selection is required. If you prefer **rufo**, set the `"formatto.formatter"` setting or use the **Formatto: Formatter** option in the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
+   - By default, **rubyfmt** is used, so no selection is required. If you prefer **rufo**, or **standardrb**, set the `"formatto.formatter"` setting or use the **Formatto: Formatter** option in the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
 
 2. Make sure the formatter you selected is installed on your system.  
-   - Installation guides: [rubyfmt](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation), [rufo](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation)
-
+   - Installation guides: [rubyfmt](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation), [rufo](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation), [standardrb](https://github.com/standardrb/standard#install)
 3. Ensure the formatter executable is available on your system `PATH` (a restart may be required).  
    Alternatively, set the `"formatto.rubyfmtPath"` or `"formatto.rufoPath"` setting, or use the **Formatto: Rubyfmt Path** or **Formatto: Rufo Path** options in the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).  
    - Formatto verifies that the selected formatter is available before running it and will prompt you if it cannot be found.
