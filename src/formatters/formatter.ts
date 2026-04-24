@@ -101,8 +101,16 @@ export abstract class Formatter {
     }
   }
 
-  public async tryFormatDocument(
+  public tryFormatDocument(
     document: vscode.TextDocument,
+    token?: vscode.CancellationToken,
+  ): Promise<string | undefined> {
+    return this.tryFormatDocumentText(document, document.getText(), token);
+  }
+
+  public async tryFormatDocumentText(
+    document: vscode.TextDocument,
+    documentText: string,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
@@ -110,7 +118,7 @@ export abstract class Formatter {
 
     let formattedText: string | undefined;
     try {
-      formattedText = await this.formatText(document, document.getText(), false, token);
+      formattedText = await this.formatText(document, documentText, false, token);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : (error?.toString() ?? 'no error message');

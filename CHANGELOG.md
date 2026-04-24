@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.1
+- **Format Pending Changes** cancels any in‑progress run when re‑invoked.
+
 ## 0.4.0
 - Simplify extension name to **Formatto**
 - Add **Standard Ruby** as a formatter.
