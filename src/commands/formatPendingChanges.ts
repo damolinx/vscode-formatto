@@ -51,7 +51,10 @@ async function formatRepoPendingChanges(
   repoDisplayId: string,
   token: vscode.CancellationToken,
 ): Promise<void> {
-  const changed = [...repo.state.workingTreeChanges, ...repo.state.indexChanges];
+  const includeStaged = context.configuration.getFormatPendingChangesIncludeStaged(repo.rootUri);
+  const changed = includeStaged
+    ? [...repo.state.workingTreeChanges, ...repo.state.indexChanges]
+    : repo.state.workingTreeChanges;
   const uris = changed.map((change) => change.uri).filter((uri) => uri.fsPath.endsWith('.rb'));
   if (uris.length === 0) {
     context.log.debug(`ChangesFormat: No Ruby changes in '${repoDisplayId}'`);

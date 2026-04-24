@@ -1,7 +1,9 @@
 # Changelog
 
 ## 0.4.1
-- **Format Pending Changes** cancels any in‑progress run when re‑invoked.
+- **Format Pending Changes** command:
+  - Cancels any in‑progress run when re‑invoked.
+  - Add `formatto.formatPendingChanges.includeStaged` to control whether staged changes are included. Defaults to `true`.
 
 ## 0.4.0
 - Simplify extension name to **Formatto**

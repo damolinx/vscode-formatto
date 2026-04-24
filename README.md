@@ -36,12 +36,16 @@ Once configured, use the built‑in **Format Document** command, or enable **Edi
 
 ## Configuration
 
+## Configuration
+
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. | `false` |
 | `formatto.formatter` | Formatter to use for formatting. | `rubyfmt` |
+| `formatto.formatPendingChanges.includeStaged` | Include staged changes when running **Format Pending Changes**. | `true` |
 
-The `formatto.«formatter»Path` values default to their executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. A path‑like value can be used instead, with the following tokens available:
+For every formatter, there is a `formatto.«formatter»Path` setting whose value defaults to the executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. 
+If the formatter is not reachable like that, use a path. The following replacement tokens are available to define this path:
 
 * `${userHome}`: User home directory  
 * `${workspaceFolder}`: Workspace folder containing the file being formatted

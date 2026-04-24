@@ -52,6 +52,11 @@
     "configuration": [
       {
         "properties": {
+          "formatto.enableRangeFormatting": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
+          },
           "formatto.formatter": {
             "type": "string",
             "default": "rubyfmt",
@@ -62,10 +67,10 @@
             ],
             "description": "Select which formatter Formatto should use."
           },
-          "formatto.enableRangeFormatting": {
+          "formatto.formatPendingChanges.includeStaged": {
             "type": "boolean",
-            "default": false,
-            "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
+            "default": true,
+            "markdownDescription": "Include staged changes when running **Format Pending Changes**."
           }
         }
       },
