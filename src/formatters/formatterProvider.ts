@@ -29,6 +29,7 @@ export class FormatterProvider {
   public get(name: FormatterName): Formatter {
     let instance = this.cachedFormatters.get(name);
     if (!instance) {
+      this.context.log.debug(`FormatterProvider: Creating formatter '${name}'`);
       instance = this.createFormatter(name);
       this.cachedFormatters.set(name, instance);
     }
