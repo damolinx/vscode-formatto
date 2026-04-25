@@ -1,6 +1,6 @@
 # Formatto
 
-Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo) and [standardrb](https://github.com/standardrb/standard). Formatto is fully **multi‑root** aware, formatters can be fully configured per workspace folder.
+Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo) and [standardrb](https://github.com/standardrb/standard). Formatto is fully **multi‑root** aware, allowing each workspace folder to use its own formatter and configuration.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -30,11 +30,10 @@ Once configured, use the built‑in **Format Document** command, or enable **Edi
 - **rubyfmt** provides deterministic, configuration‑free formatting.
   - It remains as the default purely for backward compatibility, since Formatto originally shipped with support for rubyfmt only.
 - **rufo** supports `.rufo` configuration and offers customizable formatting style.
-- **standardrb** also provides provides deterministic, configuration‑free formatting based on RuboCop rules but because of that, it is more than just a formatter.
+- **standardrb** provides deterministic, opinionated formatting based on RuboCop's rule engine. Because it runs RuboCop rather than using a dedicated formatter, it is typically much slower—often an order of magnitude slower than rubyfmt or rufo.
+
 
 [↑ Back to top](#table-of-contents)
-
-## Configuration
 
 ## Configuration
 
@@ -67,7 +66,7 @@ If the formatter is not reachable like that, use a path. The following replaceme
 | `formatto.rufoPreferBundler` | Use `bundle exec` to run `rufo`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before running the formatter. | `true` |
 
-Additionally, note that Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
+Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
 
 [↑ Back to top](#table-of-contents)
 
@@ -83,7 +82,7 @@ Additionally, note that Rufo automatically loads [`.rufo` configuration files](h
 
 *Standard Ruby* is different from *rubyfmt* and *Rufo* as it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
 
-* *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional filesystem operations, but avoids an unexpected save of the document and is therefore the default behavior.
+* *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional file system operations, but avoids an unexpected save of the document and is therefore the default behavior.
 * *forceSave*: saves the document to disk before formatting it. This is not the default mode because it changes standard formatter behavior, but it may be preferred in workflows where on‑disk state must always reflect the formatted result.
 
 Whenever the editor has no pending changes, `standardrb` runs directly against the file on disk and lets the editor detect the change.
@@ -102,9 +101,9 @@ This command is available only when at least one Git repository is open in the w
 
 ### Format Selection
 
-Most Ruby formatters do not support formatting arbitrary ranges of a document. Formatto supports the  **Format Selection** command by sending the selected range to the formatter as if it were the full document and then adjusting the result using a heuristic.
+Most Ruby formatters do not support formatting arbitrary ranges of a document. Formatto supports the **Format Selection** command by sending the selected range to the formatter as if it were the full document and then adjusting the result using a heuristic.
 
-This feature is **experimental**, and results may not match **Format Document** formatting. In some cases, formatting might fail depending on the shape of the selection.
+This feature is **experimental** and results may not match **Format Document**. In some cases, formatting might fail depending on the shape of the selection.
 
 > **DO NOT** report issues with selection‑formatting to the formatter projects.
 

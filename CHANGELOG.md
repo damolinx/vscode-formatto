@@ -2,9 +2,11 @@
 
 ## 0.4.1
 - **Format Pending Changes** command:
-  - Cancel any in‑progress run when re‑invoked.
   - Add `formatto.formatPendingChanges.includeStaged` to control whether staged changes are included. Defaults to `true`.
-- Formatter verfication improvements:
+  - Refresh Git status before formatting.
+  - Use progress notification to support cancellation.
+  - Prevent overlapping run.
+- Formatter verification improvements:
   - Add support for `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings.
   - Verification cache keys off the resolved run command instead of the formatter ID, ensuring verification re-runs on relevant configuration changes.
 

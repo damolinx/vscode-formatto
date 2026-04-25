@@ -4,44 +4,68 @@ import type { ExtensionContext } from '../extensionContext';
 import { getGitApi } from '../utils/git';
 import { normalizeForDisplay } from '../utils/uri';
 
-let activeFormatCts: vscode.CancellationTokenSource | undefined;
+let isRunning = false;
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
-  if (activeFormatCts) {
-    activeFormatCts.cancel();
+  if (isRunning) {
+    context.log.warn('FormatPendingChanges: command is already running, ignoring new request');
+    return;
   }
 
-  activeFormatCts = new vscode.CancellationTokenSource();
+  isRunning = true;
   try {
-    await startFormatPendingChanges(context, activeFormatCts.token);
+    await startFormatPendingChanges(context);
   } finally {
-    activeFormatCts = undefined;
+    isRunning = false;
   }
 }
 
-async function startFormatPendingChanges(
-  context: ExtensionContext,
-  token: vscode.CancellationToken,
-): Promise<void> {
+async function startFormatPendingChanges(context: ExtensionContext): Promise<void> {
   const api = getGitApi();
   if (!api) {
     const message = 'Git support is unavailable';
     vscode.window.showWarningMessage(message);
-    context.log.warn('ChangesFormat:', message);
+    context.log.warn('FormatPendingChanges:', message);
     return;
   }
 
   if (api.repositories.length === 0) {
     const message = 'No repositories found in workspace.';
     vscode.window.showWarningMessage(message);
-    context.log.info('ChangesFormat:', message);
+    context.log.info('FormatPendingChanges:', message);
     return;
   }
 
-  await Promise.allSettled(
-    api.repositories.map((repo) =>
-      formatRepoPendingChanges(context, repo, normalizeForDisplay(repo.rootUri), token),
-    ),
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Format Pending changes',
+      cancellable: true,
+    },
+    async (progress, progressToken) => {
+      progress.report({ message: 'Refreshing git status…' });
+      const start = Date.now();
+      await Promise.race([
+        vscode.commands
+          .executeCommand('git.refresh')
+          .then(() =>
+            context.log.info(`FormatPendingChanges: Refresh git status (${Date.now() - start}ms)`),
+          ),
+        new Promise<void>((resolve) => progressToken.onCancellationRequested(resolve)),
+      ]);
+
+      if (progressToken.isCancellationRequested) {
+        context.log.info('FormatPendingChanges: Canceled before processing any repo');
+        return;
+      }
+
+      progress.report({ message: 'Formatting…' });
+      await Promise.allSettled(
+        api.repositories.map((repo) =>
+          formatRepoPendingChanges(context, repo, normalizeForDisplay(repo.rootUri), progressToken),
+        ),
+      );
+    },
   );
 }
 
@@ -57,13 +81,13 @@ async function formatRepoPendingChanges(
     : repo.state.workingTreeChanges;
   const uris = changed.map((change) => change.uri).filter((uri) => uri.fsPath.endsWith('.rb'));
   if (uris.length === 0) {
-    context.log.debug(`ChangesFormat: No Ruby changes in '${repoDisplayId}'`);
+    context.log.info(`FormatPendingChanges: No Ruby changes in '${repoDisplayId}'`);
     return;
   }
 
   for (const uri of uris) {
     if (token.isCancellationRequested) {
-      context.log.debug(`ChangesFormat: Canceled while processing '${repoDisplayId}'`);
+      context.log.warn(`FormatPendingChanges: Canceled while processing '${repoDisplayId}'`);
       return;
     }
 
