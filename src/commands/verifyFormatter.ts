@@ -1,63 +1,71 @@
 import * as vscode from 'vscode';
 import { execFile, ExecFileException } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
-import { FormatterOptions } from '../formatters/formatter';
-import { FormatterDescriptor, FormatterName } from '../formatters/types';
+import { Formatter } from '../formatters/formatter';
+import { FormatterName } from '../formatters/types';
 
-const verified = new Set<FormatterName>();
+const verified = new Set<string>();
 
 export async function verifyFormatter(
   context: ExtensionContext,
   scope: vscode.Uri,
-  options: FormatterOptions & { cwd: string },
-  descriptor: FormatterDescriptor,
+  formatterOrName: Formatter | FormatterName,
 ): Promise<boolean> {
+  const formatter =
+    formatterOrName instanceof Formatter
+      ? formatterOrName
+      : context.formatters.get(formatterOrName);
+  const { descriptor } = formatter;
   if (!context.configuration.shouldVerifyFormatter(descriptor.id)) {
     context.log.info(`Verify(${descriptor.id}): Skipped verification (disabled by setting)`);
     return true;
   }
 
-  if (verified.has(descriptor.id)) {
+  const command = formatter.getFormatterCommand(scope);
+  const verificationCacheKey = `${descriptor.id}:${command.join(':')}`;
+  if (verified.has(verificationCacheKey)) {
     context.log.debug(`Verify(${descriptor.id}): Skipped verification (already verified)`);
     return true;
   }
 
-  const resolvedCmd = options.cmd ?? context.configuration.getFormatterPath(descriptor.id, scope);
-  const result = await isAvailable(resolvedCmd, options.cwd, descriptor.versionArgs);
-  if (result.version) {
-    verified.add(descriptor.id);
-    context.log.info(`${descriptor.id}: ${resolvedCmd} - Version: ${result.version}`);
+  const [cmd, ...args] = command;
+  if (descriptor.versionArgs?.length) {
+    args.push(...descriptor.versionArgs);
+  }
+  const cwd = formatter.getCwd(scope);
+  const result = await isAvailable(cmd, cwd, args);
+  if ('version' in result) {
+    verified.add(verificationCacheKey);
+    context.log.info(`Verify(${descriptor.id}): Version: ${result.version}`);
     return true;
   }
 
-  const code = result.error?.code ?? result.error?.name ?? 'unknown';
-  const message = result.error?.message ? `: ${result.error.message}` : '';
-  context.log.error(`Verify: ${resolvedCmd} - ${code}${message}`);
-
+  context.log.error(`Verify(${descriptor.id}): ${result.error.message}`);
+  const message =
+    cmd === 'bundle'
+      ? 'Check your Gemfile and ensure the formatter gem is installed.'
+      : 'The formatter may be missing or incompatible with this system.';
   const selection = await vscode.window.showWarningMessage(
-    `Could not run formatter '${resolvedCmd}'. The formatter may be missing or incompatible with this system.`,
-    'Install',
-    'Configure',
+    `Failed to run '${descriptor.id}'. ${message}`,
+    'Show Logs',
+    'Documentation',
     "Don't ask again",
   );
 
   switch (selection) {
-    case 'Install':
+    case 'Documentation':
       vscode.env.openExternal(vscode.Uri.parse(descriptor.installUrl));
-      break;
-
-    case 'Configure':
-      vscode.commands.executeCommand(
-        'workbench.action.openSettings',
-        context.configuration.formatterPathKey(descriptor.id),
-      );
       break;
 
     case "Don't ask again":
       await context.configuration.updateVerifyFormatter(descriptor.id, false);
-      context.log.info(
-        `Verify(${descriptor.id}): Disabled by ${context.configuration.verifyFormatterKey(descriptor.id, true)} setting.`,
+      context.log.warn(
+        `Verify(${descriptor.id}): Verification disabled via ${context.configuration.verifyFormatterKey(descriptor.id, true)} setting.`,
       );
+      break;
+
+    case 'Show Logs':
+      context.log.show(true);
       break;
   }
 
@@ -68,7 +76,7 @@ async function isAvailable(
   cmd: string,
   cwd?: string,
   args: string[] = [],
-): Promise<{ error?: ExecFileException; version?: string }> {
+): Promise<{ error: ExecFileException } | { version: string }> {
   return new Promise((resolve) => {
     execFile(cmd, args, { cwd, timeout: 5000 }, (error, stdout) => {
       if (error) {

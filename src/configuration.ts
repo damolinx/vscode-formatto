@@ -59,6 +59,16 @@ export class Configuration {
   }
 
   /**
+   * Get {@link getFormatterName configured formatter} additional arguments.
+   */
+  public getFormatterAdditionalArgs(
+    formatter: FormatterName,
+    scope?: vscode.ConfigurationScope,
+  ): string[] {
+    return this.getValue<string[]>(scope, `${formatter}Args`, []);
+  }
+
+  /**
    * Get the configured formatter name.
    */
   public getFormatterName(
@@ -69,35 +79,33 @@ export class Configuration {
   }
 
   /**
-   * Get {@link getFormatterName configured formatter} arguments.
-   */
-  public getFormatterArgs(formatter: FormatterName, scope?: vscode.ConfigurationScope): string[] {
-    return this.getValue<string[]>(scope, `${formatter}Args`, []);
-  }
-
-  /**
    * Get {@link getFormatterName configured formatter} path.
    */
   public getFormatterPath(
     formatter: FormatterName,
-    scope?: vscode.Uri,
+    scope?: vscode.ConfigurationScope,
     resolveTokens = true,
   ): string {
     const rawValue = this.getValue(scope, this.formatterPathKey(formatter), formatter);
-    return resolveTokens ? resolveTokenizedPath(rawValue, scope) : rawValue;
+    if (!resolveTokens) {
+      return rawValue;
+    }
+
+    const contextUri = !scope || scope instanceof vscode.Uri ? scope : scope.uri;
+    return resolveTokenizedPath(rawValue, contextUri);
   }
 
   /**
    * Whether Format Pending Changes should include staged changes.
    */
-  public getFormatPendingChangesIncludeStaged(scope?: vscode.Uri): boolean {
+  public getFormatPendingChangesIncludeStaged(scope?: vscode.ConfigurationScope): boolean {
     return this.getValue(scope, 'formatPendingChanges.includeStaged', true);
   }
 
   /**
    * Whether to run with `bundle exec`.
    */
-  public getPreferBundler(formatter: FormatterName, scope?: vscode.Uri): boolean {
+  public getPreferBundler(formatter: FormatterName, scope?: vscode.ConfigurationScope): boolean {
     return this.getValue(scope, this.preferBundlerKey(formatter), false);
   }
 

@@ -2,8 +2,11 @@
 
 ## 0.4.1
 - **Format Pending Changes** command:
-  - Cancels any in‑progress run when re‑invoked.
+  - Cancel any in‑progress run when re‑invoked.
   - Add `formatto.formatPendingChanges.includeStaged` to control whether staged changes are included. Defaults to `true`.
+- Formatter verfication improvements:
+  - Add support for `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings.
+  - Verification cache keys off the resolved run command instead of the formatter ID, ensuring verification re-runs on relevant configuration changes.
 
 ## 0.4.0
 - Simplify extension name to **Formatto**
@@ -37,7 +40,7 @@
 - `rubyfmt` verification UX updates:
   - **Ignore** option renamed to **Don't ask again**.
   - `formatto.verifyRubyfmt` setting is always updated in **User Settings** (vs Workspace or Workspace Folder).
-- Update link to `rubyfmt` installation (*Installation* section).
+- Update link to `rubyfmt` installation.
 - Availability check now logs the `rubyfmt --version` output.
 
 ## 0.1.4

@@ -1,16 +1,8 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
+import { FormatterOptions } from './formatterOptions';
 import { FormatterDescriptor, FormatterName } from './types';
-
-export interface FormatterOptions {
-  /** Command arguments. {@link getFormatterArgs} are always appended to these. */
-  args?: string[];
-  /** Command. If omitted, {@link getFormatterCommand} is used. */
-  cmd?: string;
-  /** Command working dir. If omitted, the workspace or parent dir of the scope URI is used. */
-  cwd?: string;
-}
 
 export abstract class Formatter {
   constructor(
@@ -25,17 +17,16 @@ export abstract class Formatter {
     token?: vscode.CancellationToken,
   ): Promise<string | undefined>;
 
-  protected getCwd(uri: vscode.Uri): string {
+  public getCwd(uri: vscode.Uri): string {
     const cwd = vscode.workspace.getWorkspaceFolder(uri)?.uri ?? vscode.Uri.joinPath(uri, '..');
     return cwd.fsPath;
   }
 
-  public getFormatterCommand(scope?: vscode.Uri): string {
-    return this.context.configuration.getFormatterPath(this.id, scope);
-  }
-
-  public getFormatterArgs(scope?: vscode.Uri): string[] {
-    return this.context.configuration.getFormatterArgs(this.id, scope);
+  public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
+    const cmd = this.context.configuration.getFormatterPath(this.id, scope);
+    return this.context.configuration.getPreferBundler(this.id, scope)
+      ? ['bundle', 'exec', cmd]
+      : [cmd];
   }
 
   public get id(): FormatterName {
@@ -46,25 +37,31 @@ export abstract class Formatter {
     return code === 0;
   }
 
+  public resolveRunCommand(
+    uri: vscode.Uri,
+    options: FormatterOptions,
+  ): { args: string[]; cmd: string; cwd: string } {
+    const expandedCmd = this.getFormatterCommand(uri);
+    const cmd = expandedCmd[0];
+    const args = [
+      ...expandedCmd.slice(1),
+      ...(options.args ?? []),
+      ...this.context.configuration.getFormatterAdditionalArgs(this.id, uri),
+    ];
+
+    return { args, cmd, cwd: options.cwd ?? this.getCwd(uri) };
+  }
+
   protected async run(
     text: string,
     uri: vscode.Uri,
     options: FormatterOptions,
     token?: vscode.CancellationToken,
   ): Promise<string> {
-    const { args = [], cwd = this.getCwd(uri) } = options;
-    let cmd = options.cmd ?? this.getFormatterCommand(uri);
-
-    const useBundler = this.context.configuration.getPreferBundler(this.id, uri);
-    if (useBundler) {
-      args.unshift('exec', cmd);
-      cmd = 'bundle';
-    }
-    const mergedArgs = [...args, ...this.getFormatterArgs(uri)];
-
-    this.context.log.info(`Running: '${cmd} ${mergedArgs.join(' ')}'${cwd ? ` Cwd: ${cwd}` : ''}`);
+    const { args, cmd, cwd } = this.resolveRunCommand(uri, options);
+    const start = Date.now();
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(cmd, mergedArgs, { cwd, shell: false, stdio: 'pipe', timeout: 5000 });
+      const child = spawn(cmd, args, { cwd, shell: false, stdio: 'pipe', timeout: 5000 });
       const cancelSubscription = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
         reject(new Error('Formatting canceled'));
@@ -83,7 +80,10 @@ export abstract class Formatter {
           return;
         }
 
-        if (this.isSuccessCode(code) && isBundlerSuccess(stderr)) {
+        this.context.log.info(
+          `> ${cmd} ${args.join(' ')} [${Date.now() - start}ms]${cwd ? ` Cwd: ${cwd}` : ''}`,
+        );
+        if (this.isSuccessCode(code) && isBundlerCleanRun(cmd, stderr)) {
           resolve(stdout);
         } else {
           const message = child.killed
@@ -96,8 +96,8 @@ export abstract class Formatter {
       child.stdin.end(text);
     });
 
-    function isBundlerSuccess(stderr: string) {
-      return !useBundler || stderr.length === 0;
+    function isBundlerCleanRun(cmd: string, stderr: string) {
+      return cmd !== 'bundle' || stderr.length === 0;
     }
   }
 

@@ -22,12 +22,7 @@ export class RufoFormatter extends Formatter {
     _isRange?: boolean,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const options = {
-      cmd: this.getFormatterCommand(uri),
-      cwd: this.getCwd(uri),
-    };
-
-    if (!(await verifyFormatter(this.context, uri, options, this.descriptor))) {
+    if (!(await verifyFormatter(this.context, uri, this))) {
       return;
     }
 
