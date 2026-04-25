@@ -13,8 +13,8 @@ export class Configuration {
 
   /**
    * Get a {@link getConfiguration configuration} value from a specific {@link scope}.
-   * @param section — Configuration name, supports dotted names.
-   * @param defaultValue — Value returned if the setting is not defined.
+   * @param section Configuration name, supports dotted names.
+   * @param defaultValue Value returned if the setting is not defined.
    */
   public getValue<T>(scope: vscode.ConfigurationScope | undefined, section: string): T | undefined;
   public getValue<T>(
@@ -33,8 +33,8 @@ export class Configuration {
   /**
    * Get a {@link getConfiguration configuration} value, applying VS Code's
    * normal precedence rules.
-   * @param section — Configuration name, supports dotted names.
-   * @param defaultValue — Value returned if the setting is not defined.
+   * @param section Configuration name, supports dotted names.
+   * @param defaultValue Value returned if the setting is not defined.
    */
   private resolveValue<T>(section: string): T | undefined;
   private resolveValue<T>(section: string, defaultValue: T): T;
