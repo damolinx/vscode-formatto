@@ -129,10 +129,21 @@ export class StandardRbFormatter extends Formatter {
     text: string,
     useOpenDocument: boolean,
     token: vscode.CancellationToken | undefined,
-  ): Promise<string> {
-    await this.run(text, uri, { args: ['--fix', uri.fsPath] }, token);
-    return useOpenDocument
-      ? vscode.workspace.openTextDocument(uri).then((doc) => doc.getText())
-      : fsPromises.readFile(uri.fsPath, { encoding: 'utf8' });
+  ): Promise<string | undefined> {
+    if (token?.isCancellationRequested) {
+      return;
+    }
+
+    const result = await this.run(text, uri, { args: ['--fix', uri.fsPath] }, token);
+    if (result === undefined || token?.isCancellationRequested) {
+      return;
+    }
+
+    if (useOpenDocument) {
+      const document = await vscode.workspace.openTextDocument(uri);
+      return document.getText();
+    }
+
+    return fsPromises.readFile(uri.fsPath, { encoding: 'utf8' });
   }
 }
