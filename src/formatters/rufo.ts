@@ -26,11 +26,6 @@ export class RufoFormatter extends Formatter {
       return;
     }
 
-    return this.run(text, uri, { args: ['--filename', uri.fsPath] }, token);
-  }
-
-  protected override isSuccessCode(code: number): boolean {
-    // 0: no changes, 3: changes
-    return code === 0 || code === 3;
+    return this.run(text, uri, { args: ['--simple-exit', '--filename', uri.fsPath] }, token);
   }
 }
