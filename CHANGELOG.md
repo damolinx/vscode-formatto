@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.2
+- Updates the README file.
+
 ## 0.4.1
 - **Format Pending Changes** command:
   - Add `formatto.formatPendingChanges.includeStaged` to control whether staged changes are included. Defaults to `true`.
