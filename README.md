@@ -11,6 +11,7 @@ In simple terms, the extension enables the **Format Document** command in VS Cod
   - [Rufo](#rufo)
   - [Standard Ruby](#standard-ruby)
 - [Commands](#commands)
+  - [Format Document](#format-document)
   - [Format Pending Changes](#format-pending-changes)
   - [Format Selection](#format-selection)
 - [Logs](#logs)
@@ -96,6 +97,14 @@ Whenever the editor has no pending changes, `standardrb` runs directly against t
 [↑ Back to top](#table-of-contents)
 
 ## Commands
+
+### Format Document
+
+When Formatto is set as the **default formatter** for Ruby files, the built‑in **Format Document** command automatically uses it. This also applies to **Format on Save**.
+
+If your project uses another formatter, or you simply want to try Formatto without switching defaults, you can run it on demand using the built‑in command **Format Document With…**. This lets you choose Formatto for a single formatting operation without modifying your workspace settings. This is the recommended way to test Formatto in projects that have not fully migrated yet.
+
+[↑ Back to top](#table-of-contents)
 
 ### Format Pending Changes
 
