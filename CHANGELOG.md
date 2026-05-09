@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.3
+- Disable warnings logged by Ruby when running Rufo.
+
 ## 0.4.2
 - Updates the README file.
 

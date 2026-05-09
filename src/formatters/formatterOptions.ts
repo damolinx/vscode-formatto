@@ -5,4 +5,6 @@ export interface FormatterOptions {
   cmd?: string;
   /** Command working dir. If omitted, the workspace or parent dir of the scope URI is used. */
   cwd?: string;
+  /** Process env. */
+  env?: NodeJS.ProcessEnv;
 }

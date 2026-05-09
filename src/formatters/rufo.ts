@@ -26,6 +26,14 @@ export class RufoFormatter extends Formatter {
       return;
     }
 
-    return this.run(text, uri, { args: ['--simple-exit', '--filename', uri.fsPath] }, token);
+    return this.run(
+      text,
+      uri,
+      {
+        args: ['--simple-exit', '--filename', uri.fsPath],
+        env: { ...process.env, RUBYOPT: '-W0' },
+      },
+      token,
+    );
   }
 }

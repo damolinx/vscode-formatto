@@ -61,7 +61,13 @@ export abstract class Formatter {
     const { args, cmd, cwd } = this.resolveRunCommand(uri, options);
     const start = Date.now();
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(cmd, args, { cwd, shell: false, stdio: 'pipe', timeout: 5000 });
+      const child = spawn(cmd, args, {
+        cwd,
+        env: options.env,
+        shell: false,
+        stdio: 'pipe',
+        timeout: 5000,
+      });
       const cancelSubscription = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
         reject(new Error('Formatting canceled'));
