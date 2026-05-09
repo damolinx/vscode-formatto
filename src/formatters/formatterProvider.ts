@@ -27,13 +27,13 @@ export class FormatterProvider {
   }
 
   public get(name: FormatterName): Formatter {
-    let instance = this.cachedFormatters.get(name);
-    if (!instance) {
+    let formatter = this.cachedFormatters.get(name);
+    if (!formatter) {
       this.context.log.debug(`FormatterProvider: Create formatter '${name}'`);
-      instance = this.createFormatter(name);
-      this.cachedFormatters.set(name, instance);
+      formatter = this.createFormatter(name);
+      this.cachedFormatters.set(name, formatter);
     }
-    return instance;
+    return formatter;
   }
 
   public getFor(uri: vscode.Uri): Formatter {
