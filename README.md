@@ -1,8 +1,12 @@
 # Formatto
 
-Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is fully **multi‑root** aware, allowing each workspace folder to use its own formatter and configuration.
+Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is fully **multi‑root** aware, allowing each workspace folder to use its own formatter and configuration as needed.
 
-In simple terms, the extension enables the **Format Document** command in VS Code for any Ruby file, which makes **Format on Save** available. The extension provides a [**Format Selection**](#format-selection) implementation based on a heuristic, since not all Ruby formatters support range formatting; for this reason, it is disabled by default. This may be useful for template formats that embed Ruby. Additionally, [**Format Pending Changes**](#format-pending-changes) lets you format all Ruby files you have modified in your current Git repository.
+In simple terms, the extension enables the stock [**Format Document**](#format-document) command for any Ruby file. With it, the `editor.formatOnSave` setting can be used with these files.
+
+Ruby formatters, in general, do not support range formatting, so a heuristic is used to support the [**Format Selection**](#format-selection) command. While this feature is useful in various scenarios, its custom nature justifies shipping it disabled by default to avoid confusion. Enabling it, however, is a simple [configuration](#configuration) change.
+
+With the custom [**Format Pending Changes**](#format-pending-changes) command, you can format all Ruby files that have pending changes in your current Git repository, streamlining cleanup before you stage or commit.
 
 ## Table of Contents
 - [Getting Started](#getting-started)
