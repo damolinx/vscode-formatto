@@ -1,7 +1,8 @@
 # Changelog
 
 ## 0.4.3
-- Disable warnings logged by Ruby when running Rufo.
+- Disable warnings emitted by Ruby when running Rufo.
+- Fix: **Format Cell** adds an unwanted trailing newline in Ruby notebook cells.
 
 ## 0.4.2
 - Updates the README file.
