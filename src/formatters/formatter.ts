@@ -125,7 +125,7 @@ export abstract class Formatter {
     let formattedText: string | undefined;
     try {
       formattedText = await this.formatText(document, documentText, false, token);
-      if (formattedText !== undefined && document.uri.scheme === 'vscode-notebook-cell') {
+      if (formattedText !== undefined && this.descriptor.injectsTrailingNewline && document.uri.scheme === 'vscode-notebook-cell') {
         formattedText = formattedText.trimEnd();
       }
     } catch (error) {
