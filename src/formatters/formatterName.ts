@@ -1,5 +1,5 @@
 export type FormatterName = 'rubyfmt' | 'rufo' | 'standardrb';
 
-export function capitalizeFormatterName(id: FormatterName): string {
-  return id.charAt(0).toUpperCase() + id.slice(1);
+export function capitalizeName(name: FormatterName): string {
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }

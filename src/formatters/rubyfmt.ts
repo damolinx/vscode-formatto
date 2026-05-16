@@ -30,6 +30,6 @@ export class RubyfmtFormatter extends Formatter {
   }
 
   public override getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
-    return [this.context.configuration.getFormatterPath(this.id, scope)];
+    return [this.context.configuration.getFormatterPath(this.name, scope)];
   }
 }

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX } from './constants';
-import { capitalizeFormatterName, FormatterName } from './formatters/formatterName';
+import { capitalizeName, FormatterName } from './formatters/formatterName';
 import { resolveTokenizedPath } from './utils/pathTokenization';
 
 export class Configuration {
@@ -147,7 +147,7 @@ export class Configuration {
    * @param withPrefix Whether to include the extension prefix.
    */
   public verifyFormatterKey(formatter: FormatterName, withPrefix = false): string {
-    const key = `verify${capitalizeFormatterName(formatter)}`;
+    const key = `verify${capitalizeName(formatter)}`;
     return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
   }
 }

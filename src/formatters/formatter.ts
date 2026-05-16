@@ -24,18 +24,18 @@ export abstract class Formatter {
   }
 
   public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
-    const cmd = this.context.configuration.getFormatterPath(this.id, scope);
-    return this.context.configuration.getPreferBundler(this.id, scope)
+    const cmd = this.context.configuration.getFormatterPath(this.name, scope);
+    return this.context.configuration.getPreferBundler(this.name, scope)
       ? ['bundle', 'exec', cmd]
       : [cmd];
   }
 
-  public get id(): FormatterName {
-    return this.spec.name;
-  }
-
   protected isSuccessCode(code: number | null): boolean {
     return code === 0;
+  }
+
+  public get name(): FormatterName {
+    return this.spec.name;
   }
 
   public resolveRunCommand(
@@ -47,7 +47,7 @@ export abstract class Formatter {
     const args = [
       ...expandedCmd.slice(1),
       ...(options.args ?? []),
-      ...this.context.configuration.getFormatterAdditionalArgs(this.id, uri),
+      ...this.context.configuration.getFormatterAdditionalArgs(this.name, uri),
     ];
 
     return { args, cmd, cwd: options.cwd ?? this.getCwd(uri) };
@@ -121,7 +121,7 @@ export abstract class Formatter {
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
-    this.context.log.info(`${this.id}: Format document. Path: '${path}'`);
+    this.context.log.info(`${this.name}: Format document. Path: '${path}'`);
 
     let formattedText: string | undefined;
     try {
@@ -136,7 +136,7 @@ export abstract class Formatter {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : (error?.toString() ?? 'no error message');
-      this.context.log.error(`${this.id}: Failed to format. Error: ${message}`);
+      this.context.log.error(`${this.name}: Failed to format. Error: ${message}`);
     }
     return formattedText;
   }
@@ -148,7 +148,7 @@ export abstract class Formatter {
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
     const rangeStr = `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
-    this.context.log.info(`${this.id}: Format selection. Path: '${path}' Range: ${rangeStr}`);
+    this.context.log.info(`${this.name}: Format selection. Path: '${path}' Range: ${rangeStr}`);
 
     let formattedText: string | undefined;
     try {
@@ -156,7 +156,7 @@ export abstract class Formatter {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : (error?.toString() ?? 'no error message');
-      this.context.log.error(`${this.id}: Failed to format. Error: ${message}`);
+      this.context.log.error(`${this.name}: Failed to format. Error: ${message}`);
     }
     return formattedText;
   }
