@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
+import { FormatContext } from './formatContext';
 import { FormatterName } from './formatterName';
 import { FormatterOptions } from './formatterOptions';
 import { FormatterSpec } from './formatterSpec';
@@ -11,16 +12,15 @@ export abstract class Formatter {
     public readonly spec: FormatterSpec,
   ) {}
 
-  abstract formatText(
-    document: vscode.TextDocument,
+  protected abstract formatText(
     text: string,
-    isRange?: boolean,
+    context: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined>;
 
   public getCwd(uri: vscode.Uri): string {
-    const cwd = vscode.workspace.getWorkspaceFolder(uri)?.uri ?? vscode.Uri.joinPath(uri, '..');
-    return cwd.fsPath;
+    const folder = vscode.workspace.getWorkspaceFolder(uri);
+    return (folder?.uri ?? vscode.Uri.joinPath(uri, '..')).fsPath;
   }
 
   public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
@@ -28,6 +28,10 @@ export abstract class Formatter {
     return this.context.configuration.getPreferBundler(this.name, scope)
       ? ['bundle', 'exec', cmd]
       : [cmd];
+  }
+
+  protected isBundlerCleanRun(cmd: string, stderr: string) {
+    return cmd !== 'bundle' || stderr.trim() === '';
   }
 
   protected isSuccessCode(code: number | null): boolean {
@@ -42,10 +46,10 @@ export abstract class Formatter {
     uri: vscode.Uri,
     options: FormatterOptions,
   ): { args: string[]; cmd: string; cwd: string } {
-    const expandedCmd = this.getFormatterCommand(uri);
-    const cmd = expandedCmd[0];
+    const expandedCmd = options.cmd ? [options.cmd] : this.getFormatterCommand(uri);
+    const [cmd, ...prefixArgs] = expandedCmd;
     const args = [
-      ...expandedCmd.slice(1),
+      ...prefixArgs,
       ...(options.args ?? []),
       ...this.context.configuration.getFormatterAdditionalArgs(this.name, uri),
     ];
@@ -58,16 +62,16 @@ export abstract class Formatter {
     uri: vscode.Uri,
     options: FormatterOptions,
     token?: vscode.CancellationToken,
-  ): Promise<string> {
+  ): Promise<string | undefined> {
     const { args, cmd, cwd } = this.resolveRunCommand(uri, options);
     const start = Date.now();
-    return new Promise<string>((resolve, reject) => {
+    return new Promise<string | undefined>((resolve, reject) => {
       const child = spawn(cmd, args, {
         cwd,
         env: options.env,
         shell: false,
         stdio: 'pipe',
-        timeout: 5000,
+        timeout: this.spec.timeouts?.executionMs ?? 5000,
       });
       const cancelSubscription = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
@@ -88,10 +92,10 @@ export abstract class Formatter {
         }
 
         this.context.log.info(
-          `> ${cmd} ${args.join(' ')} [${Date.now() - start}ms]${cwd ? ` Cwd: ${cwd}` : ''}`,
+          `> ${cmd} ${args.join(' ')} (${Date.now() - start}ms)${cwd ? ` Cwd: ${cwd}` : ''}`,
         );
-        if (this.isSuccessCode(code) && isBundlerCleanRun(cmd, stderr)) {
-          resolve(stdout);
+        if (this.isSuccessCode(code) && this.isBundlerCleanRun(cmd, stderr)) {
+          resolve(stdout !== text ? stdout : undefined);
         } else {
           const message = child.killed
             ? `${cmd} was killed. This can happen if allowed runtime was exceeded.`
@@ -100,24 +104,12 @@ export abstract class Formatter {
         }
       });
 
-      child.stdin.end(text);
+      child.stdin.end(this.spec.inputKind === 'stdin' ? text : undefined);
     });
-
-    function isBundlerCleanRun(cmd: string, stderr: string) {
-      return cmd !== 'bundle' || stderr.length === 0;
-    }
   }
 
-  public tryFormatDocument(
+  public async tryFormatDocument(
     document: vscode.TextDocument,
-    token?: vscode.CancellationToken,
-  ): Promise<string | undefined> {
-    return this.tryFormatDocumentText(document, document.getText(), token);
-  }
-
-  public async tryFormatDocumentText(
-    document: vscode.TextDocument,
-    documentText: string,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
@@ -125,10 +117,14 @@ export abstract class Formatter {
 
     let formattedText: string | undefined;
     try {
-      formattedText = await this.formatText(document, documentText, false, token);
+      formattedText = await this.formatText(
+        document.getText(),
+        { isDirty: document.isDirty, isRange: false, uri: document.uri },
+        token,
+      );
       if (
         formattedText !== undefined &&
-        this.spec.injectsTrailingNewline &&
+        this.spec.appendsTrailingNewline &&
         document.uri.scheme === 'vscode-notebook-cell'
       ) {
         formattedText = formattedText.trimEnd();
@@ -152,7 +148,11 @@ export abstract class Formatter {
 
     let formattedText: string | undefined;
     try {
-      formattedText = await this.formatText(document, document.getText(range), true, token);
+      formattedText = await this.formatText(
+        document.getText(range),
+        { isDirty: document.isDirty, isRange: true, uri: document.uri },
+        token,
+      );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : (error?.toString() ?? 'no error message');

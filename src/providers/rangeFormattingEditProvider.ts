@@ -45,13 +45,16 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    if (formatter.spec.injectsTrailingNewline) {
-      if (range.end.line === document.lineCount - 1 && formattedText.endsWith('\n')) {
+    if (formatter.spec.appendsTrailingNewline) {
+      if (range.end.line !== document.lineCount - 1 && formattedText.endsWith('\n')) {
         formattedText = formattedText.slice(0, -1);
       }
     }
 
-    const indentation = RangeFormattingEditProvider.getIndentOfFirstNonEmptyLine(document, range);
+    const indentation = RangeFormattingEditProvider.getIndentOfFirstPrecedingNonEmptyLine(
+      document,
+      range,
+    );
     if (indentation > 0 && range.start.character < indentation) {
       return [
         vscode.TextEdit.replace(
@@ -64,11 +67,11 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     return [vscode.TextEdit.replace(range, formattedText)];
   }
 
-  private static getIndentOfFirstNonEmptyLine(
+  private static getIndentOfFirstPrecedingNonEmptyLine(
     document: vscode.TextDocument,
     range: vscode.Range,
   ): number {
-    for (let line = range.start.line; line <= range.end.line; line++) {
+    for (let line = range.start.line - 1; line >= 0; line--) {
       const textLine = document.lineAt(line);
       if (!textLine.isEmptyOrWhitespace) {
         return textLine.firstNonWhitespaceCharacterIndex;

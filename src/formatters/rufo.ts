@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
+import { FormatContext } from './formatContext';
 import { Formatter } from './formatter';
 import { FormatterSpec } from './formatterSpec';
 
 export const RufoDescriptor: FormatterSpec = {
   name: 'rufo',
-  injectsTrailingNewline: true,
+  appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation' },
+  inputKind: 'stdin',
   versionArgs: ['--version'],
 };
 
@@ -17,16 +19,15 @@ export class RufoFormatter extends Formatter {
   }
 
   public override async formatText(
-    { uri }: vscode.TextDocument,
     text: string,
-    _isRange?: boolean,
+    { uri }: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     if (!(await verifyFormatter(this.context, uri, this))) {
       return;
     }
 
-    return this.run(
+    const formattedText = await this.run(
       text,
       uri,
       {
@@ -35,5 +36,6 @@ export class RufoFormatter extends Formatter {
       },
       token,
     );
+    return formattedText;
   }
 }

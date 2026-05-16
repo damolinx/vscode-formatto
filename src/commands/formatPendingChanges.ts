@@ -93,10 +93,8 @@ async function formatRepoPendingChanges(
 
     const formatter = context.formatters.getFor(uri);
     const document = await vscode.workspace.openTextDocument(uri);
-    const documentText = document.getText();
-
-    const formattedText = await formatter.tryFormatDocumentText(document, documentText, token);
-    if (formattedText !== undefined && formattedText !== documentText) {
+    const formattedText = await formatter.tryFormatDocument(document, token);
+    if (formattedText !== undefined) {
       await applyDocumentEdit(document, formattedText);
     }
   }

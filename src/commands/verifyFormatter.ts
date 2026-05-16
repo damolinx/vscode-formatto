@@ -33,7 +33,7 @@ export async function verifyFormatter(
     args.push(...spec.versionArgs);
   }
   const cwd = formatter.getCwd(scope);
-  const result = await isAvailable(cmd, cwd, args);
+  const result = await isAvailable(cmd, cwd, args, spec.timeouts?.verificationMs);
   if ('version' in result) {
     verified.add(verificationCacheKey);
     context.log.info(`Verify(${spec.name}): Version: ${result.version}`);
@@ -78,9 +78,10 @@ async function isAvailable(
   cmd: string,
   cwd?: string,
   args: string[] = [],
+  timeout = 1000,
 ): Promise<{ error: ExecFileException } | { version: string }> {
   return new Promise((resolve) => {
-    execFile(cmd, args, { cwd, timeout: 5000 }, (error, stdout) => {
+    execFile(cmd, args, { cwd, timeout }, (error, stdout) => {
       if (error) {
         if (error.killed) {
           resolve({

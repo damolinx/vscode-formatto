@@ -4,13 +4,19 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
+import { FormatContext } from './formatContext';
 import { Formatter } from './formatter';
 import { FormatterSpec } from './formatterSpec';
 
 export const StandardRbDescriptor: FormatterSpec = {
   name: 'standardrb',
-  injectsTrailingNewline: true,
+  appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/standardrb/standard#install' },
+  inputKind: 'file',
+  timeouts: {
+    executionMs: 5000,
+    verificationMs: 5000,
+  },
   versionArgs: ['--version'],
 };
 
@@ -44,54 +50,53 @@ export class StandardRbFormatter extends Formatter {
     return this.tmpDirPath;
   }
 
-  public override async formatText(
-    document: vscode.TextDocument,
+  protected override async formatText(
     text: string,
-    isRange?: boolean,
+    formatContext: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const { uri } = document;
-    if (!(await verifyFormatter(this.context, uri, this))) {
+    if (!(await verifyFormatter(this.context, formatContext.uri, this))) {
       return;
     }
 
-    if (!isRange && !document.isDirty) {
-      return this.runStandardRb(uri, text, true, token);
+    if (!formatContext.isRange && !formatContext.isDirty) {
+      return this.runStandardRb(formatContext.uri, text, true, token);
     }
 
-    const mode: FormattingMode = this.getFormattingMode(uri, isRange);
+    const mode: FormattingMode = this.getFormattingMode(formatContext);
     this.context.log.debug(`StandardRb: Using formatting mode: '${mode}'`);
 
     switch (mode) {
       case 'forceSave':
-        return await this.formatAfterSave(document, text, token);
+        return await this.formatAfterSave(text, formatContext, token);
       case 'tmpFile':
-        return await this.formatWithTemporaryFile(document, text, token);
+        return await this.formatWithTemporaryFile(text, formatContext, token);
       default:
         throw new Error(`Unsupported StandardRB formatting mode: ${mode}`);
     }
   }
 
   private async formatAfterSave(
-    document: vscode.TextDocument,
     text: string,
+    formatContext: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
+    const document = await vscode.workspace.openTextDocument(formatContext.uri);
     const saved = await document.save();
     if (!saved) {
       this.context.log.warn(
         'StandardRb: Document save canceled, not formatting',
-        vscode.workspace.asRelativePath(document.uri),
+        vscode.workspace.asRelativePath(formatContext.uri),
       );
       return;
     }
 
-    return await this.runStandardRb(document.uri, text, true, token);
+    return await this.runStandardRb(formatContext.uri, text, true, token);
   }
 
   private async formatWithTemporaryFile(
-    _document: vscode.TextDocument,
     text: string,
+    _formatContext: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     let tmpFilePath: string | undefined;
@@ -109,17 +114,17 @@ export class StandardRbFormatter extends Formatter {
     }
   }
 
-  private getFormattingMode(uri: vscode.Uri, isRange: boolean | undefined): FormattingMode {
-    return isRange
+  private getFormattingMode(formatContext: FormatContext): FormattingMode {
+    return formatContext.isRange
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
-          uri,
-          'standardrbFormattingMode',
-          'tmpFile',
-        );
+        formatContext.uri,
+        'standardrbFormattingMode',
+        'tmpFile',
+      );
   }
 
-  protected override isSuccessCode(code: number): boolean {
+  protected override isSuccessCode(code: number | null): boolean {
     // 0: no changes, 1: `--fix` did not fix everything
     return code === 0 || code === 1;
   }

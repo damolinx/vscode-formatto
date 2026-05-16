@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.4
+- Improved formatter execution:
+  - Version and formatting now use separate timeouts.
+  - No‑change results are correctly recognized and returned.
+  - `standardrb` no longer writes to stdin unnecessarily.
+- **Format Selection** heuristic matches better previous indentation.
+
 ## 0.4.3
 - Disable warnings emitted by Ruby when running Rufo.
 - Fix: **Format Cell** adds an unwanted trailing newline in Ruby notebook cells.

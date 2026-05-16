@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
+import { FormatContext } from './formatContext';
 import { Formatter } from './formatter';
 import { FormatterSpec } from './formatterSpec';
 
 export const RubyfmtDescriptor: FormatterSpec = {
   name: 'rubyfmt',
-  injectsTrailingNewline: true,
+  appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation' },
+  inputKind: 'stdin',
   versionArgs: ['--version'],
 };
 
@@ -17,16 +19,23 @@ export class RubyfmtFormatter extends Formatter {
   }
 
   public override async formatText(
-    { uri }: vscode.TextDocument,
     text: string,
-    _isRange?: boolean,
+    { uri }: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     if (!(await verifyFormatter(this.context, uri, this))) {
       return;
     }
 
-    return this.run(text, uri, {}, token);
+    const formattedText = await this.run(
+      text,
+      uri,
+      {
+        env: process.env,
+      },
+      token,
+    );
+    return formattedText;
   }
 
   public override getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
