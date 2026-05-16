@@ -3,6 +3,12 @@ import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
+  if (!context.configuration.enableRangeFormatting) {
+    context.log.info("RangeFormat: Disabled. Use 'formatto.enableRangeFormatting' to enable.");
+    return;
+  }
+
+  context.log.debug("RangeFormat: Enabled");
   context.disposables.push(
     vscode.languages.registerDocumentRangeFormattingEditProvider(
       DOCUMENT_SELECTOR,
@@ -17,7 +23,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
  * the indentation. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
-  constructor(private readonly context: ExtensionContext) {}
+  constructor(private readonly context: ExtensionContext) { }
 
   async provideDocumentRangeFormattingEdits(
     document: vscode.TextDocument,

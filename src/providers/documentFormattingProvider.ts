@@ -3,6 +3,7 @@ import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
+  context.log.debug('DocumentFormat: Enabled');
   context.disposables.push(
     vscode.languages.registerDocumentFormattingEditProvider(
       DOCUMENT_SELECTOR,
