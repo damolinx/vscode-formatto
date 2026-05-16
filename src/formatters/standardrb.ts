@@ -3,6 +3,7 @@ import { existsSync, promises as fsPromises, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { verifyFormatter } from '../commands/verifyFormatter';
+import { SUPPORTED_RUBY_EXTENSIONS } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
 import { Formatter } from './formatter';
@@ -13,6 +14,7 @@ export const StandardRbDescriptor: FormatterSpec = {
   appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/standardrb/standard#install' },
   inputKind: 'file',
+  supportedExtensions: SUPPORTED_RUBY_EXTENSIONS,
   timeouts: {
     executionMs: 5000,
     verificationMs: 5000,
@@ -60,7 +62,7 @@ export class StandardRbFormatter extends Formatter {
     }
 
     if (!formatContext.isRange && !formatContext.isDirty) {
-      return this.runStandardRb(formatContext.uri, text, true, token);
+      return this.runStandardRb(text, formatContext, true, token);
     }
 
     const mode: FormattingMode = this.getFormattingMode(formatContext);
@@ -91,12 +93,12 @@ export class StandardRbFormatter extends Formatter {
       return;
     }
 
-    return await this.runStandardRb(formatContext.uri, text, true, token);
+    return await this.runStandardRb(text, formatContext, true, token);
   }
 
   private async formatWithTemporaryFile(
     text: string,
-    _formatContext: FormatContext,
+    context: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     let tmpFilePath: string | undefined;
@@ -104,7 +106,16 @@ export class StandardRbFormatter extends Formatter {
       const tmpDirPath = await this.ensureTmpDir();
       tmpFilePath = join(tmpDirPath, `buffer-${Date.now()}-${Math.random().toString(36)}`);
       await fsPromises.writeFile(tmpFilePath, text);
-      return await this.runStandardRb(vscode.Uri.file(tmpFilePath), text, false, token);
+      return await this.runStandardRb(
+        text,
+        {
+          ...context,
+          isDirty: false,
+          uri: vscode.Uri.file(tmpFilePath),
+        },
+        false,
+        token,
+      );
     } finally {
       if (tmpFilePath) {
         await fsPromises.unlink(tmpFilePath).catch((reason) => {
@@ -118,10 +129,10 @@ export class StandardRbFormatter extends Formatter {
     return formatContext.isRange
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
-        formatContext.uri,
-        'standardrbFormattingMode',
-        'tmpFile',
-      );
+          formatContext.uri,
+          'standardrbFormattingMode',
+          'tmpFile',
+        );
   }
 
   protected override isSuccessCode(code: number | null): boolean {
@@ -130,8 +141,8 @@ export class StandardRbFormatter extends Formatter {
   }
 
   private async runStandardRb(
-    uri: vscode.Uri,
     text: string,
+    formatContext: FormatContext,
     useOpenDocument: boolean,
     token: vscode.CancellationToken | undefined,
   ): Promise<string | undefined> {
@@ -139,16 +150,21 @@ export class StandardRbFormatter extends Formatter {
       return;
     }
 
-    const result = await this.run(text, uri, { args: ['--fix', uri.fsPath] }, token);
+    const result = await this.run(
+      text,
+      formatContext,
+      { args: ['--fix', formatContext.uri.fsPath] },
+      token,
+    );
     if (result === undefined || token?.isCancellationRequested) {
       return;
     }
 
     if (useOpenDocument) {
-      const document = await vscode.workspace.openTextDocument(uri);
+      const document = await vscode.workspace.openTextDocument(formatContext.uri);
       return document.getText();
     }
 
-    return fsPromises.readFile(uri.fsPath, { encoding: 'utf8' });
+    return fsPromises.readFile(formatContext.uri.fsPath, { encoding: 'utf8' });
   }
 }

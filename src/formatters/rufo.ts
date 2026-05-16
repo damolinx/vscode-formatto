@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { verifyFormatter } from '../commands/verifyFormatter';
+import { SUPPORTED_RUBY_EXTENSIONS } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
 import { Formatter } from './formatter';
@@ -10,6 +11,7 @@ export const RufoDescriptor: FormatterSpec = {
   appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation' },
   inputKind: 'stdin',
+  supportedExtensions: SUPPORTED_RUBY_EXTENSIONS.concat(['.erb', '.rhtml']),
   versionArgs: ['--version'],
 };
 
@@ -20,18 +22,18 @@ export class RufoFormatter extends Formatter {
 
   public override async formatText(
     text: string,
-    { uri }: FormatContext,
+    formatContext: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    if (!(await verifyFormatter(this.context, uri, this))) {
+    if (!(await verifyFormatter(this.context, formatContext.uri, this))) {
       return;
     }
 
     const formattedText = await this.run(
       text,
-      uri,
+      formatContext,
       {
-        args: ['--simple-exit', '--filename', uri.fsPath],
+        args: ['--simple-exit', '--filename', formatContext.uri.fsPath],
         env: { ...process.env, RUBYOPT: '-W0' },
       },
       token,

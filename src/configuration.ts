@@ -59,6 +59,13 @@ export class Configuration {
   }
 
   /**
+   * Additional file extensions to accept for formatting.
+   */
+  public getAdditionalSupportedExtensions(scope?: vscode.ConfigurationScope): string[] {
+    return this.getValue<string[]>(scope, 'additionalSupportedExtensions', []);
+  }
+
+  /**
    * Get {@link getFormatterName configured formatter} additional arguments.
    */
   public getFormatterAdditionalArgs(

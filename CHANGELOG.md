@@ -1,11 +1,13 @@
 # Changelog
 
 ## 0.4.4
+- Add `formatto.additionalSupportedExtensions` to allow registering additional file extensions for formatting (still editor must be `ruby`, `erb` or `gemfile`).
+  - Note that only Rufo supports ERB files.
 - Improved formatter execution:
-  - Version and formatting now use separate timeouts.
-  - No‑change results are correctly recognized and returned.
+  - Version and formatting now use separate timeouts, configurable per formatter.
+  - No-change results are correctly recognized and returned.
   - `standardrb` no longer writes to stdin unnecessarily.
-- **Format Selection** heuristic matches better previous indentation.
+- **Format Selection** heuristic matches preceding line indentation.
 
 ## 0.4.3
 - Disable warnings emitted by Ruby when running Rufo.
@@ -33,7 +35,7 @@
 - Update README.
 - Formatter verification runs only until the formatter is successfully detected.
 - Declare `gemfile` as supported language. 
-- Fix: Formatter executions now enforce a 5‑second timeout to prevent hangs.
+- Fix: Formatter executions now enforce a 5-second timeout to prevent hangs.
 - Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
 - Fix: **Format Selection** injects a trailing newline.
 

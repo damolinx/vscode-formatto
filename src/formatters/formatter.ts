@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
+import { extname } from 'path';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
 import { FormatterName } from './formatterName';
@@ -59,11 +60,17 @@ export abstract class Formatter {
 
   protected async run(
     text: string,
-    uri: vscode.Uri,
+    formatContext: FormatContext,
     options: FormatterOptions,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const { args, cmd, cwd } = this.resolveRunCommand(uri, options);
+    const reason = this.validateSupported(formatContext.uri, formatContext.languageId);
+    if (reason) {
+      this.context.log.info(`${this.name}: ${reason}`);
+      return;
+    }
+
+    const { args, cmd, cwd } = this.resolveRunCommand(formatContext.uri, options);
     const start = Date.now();
     return new Promise<string | undefined>((resolve, reject) => {
       const child = spawn(cmd, args, {
@@ -119,7 +126,12 @@ export abstract class Formatter {
     try {
       formattedText = await this.formatText(
         document.getText(),
-        { isDirty: document.isDirty, isRange: false, uri: document.uri },
+        {
+          isDirty: document.isDirty,
+          isRange: false,
+          languageId: document.languageId,
+          uri: document.uri,
+        },
         token,
       );
       if (
@@ -150,7 +162,12 @@ export abstract class Formatter {
     try {
       formattedText = await this.formatText(
         document.getText(range),
-        { isDirty: document.isDirty, isRange: true, uri: document.uri },
+        {
+          isDirty: document.isDirty,
+          isRange: true,
+          languageId: document.languageId,
+          uri: document.uri,
+        },
         token,
       );
     } catch (error) {
@@ -159,5 +176,20 @@ export abstract class Formatter {
       this.context.log.error(`${this.name}: Failed to format. Error: ${message}`);
     }
     return formattedText;
+  }
+
+  protected validateSupported(uri: vscode.Uri, languageId: string): string | undefined {
+    const extension = extname(uri.fsPath).toLowerCase();
+    if (!extension) {
+      return;
+    }
+
+    const additional = this.context.configuration
+      .getAdditionalSupportedExtensions(uri)
+      .map((ext) => ext.toLowerCase());
+    const supported = new Set([...this.spec.supportedExtensions, ...additional]);
+    return supported.has(extension)
+      ? undefined
+      : `Unsupported extension '${extension}' (${languageId})`;
   }
 }

@@ -25,6 +25,7 @@
     "Programming Languages"
   ],
   "keywords": [
+    "erb",
     "format",
     "formatter",
     "multi-root",
@@ -37,6 +38,8 @@
     "damolinx.tracciatto"
   ],
   "activationEvents": [
+    "onLanguage:erb",
+    "onLanguage:gemfile",
     "onLanguage:ruby"
   ],
   "main": "./out/extension.js",
@@ -52,6 +55,15 @@
     "configuration": [
       {
         "properties": {
+          "formatto.additionalSupportedExtensions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\..+$"
+            },
+            "default": [],
+            "markdownDescription": "Additional file extensions to accept for formatting, in addition to the [formatter](command:workbench.action.openSettings?%5B%22formatto.formatter%22%5D)'s built-in supported extensions. These extensions only apply to files whose language is already recognized as `ruby`, `gemfile`, or `erb`. Your selected formatter must still support the file syntax; otherwise formatting will fail (see logs)."
+          },
           "formatto.enableRangeFormatting": {
             "type": "boolean",
             "default": false,

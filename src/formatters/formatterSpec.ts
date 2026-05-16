@@ -23,6 +23,9 @@ export interface FormatterSpec {
   /** Formatter identifier. */
   readonly name: FormatterName;
 
+  /** File extensions that this formatter supports. */
+  readonly supportedExtensions: readonly string[];
+
   /** Timeout settings. */
   readonly timeouts?: {
     /** Formatting timeout (ms). */

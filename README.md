@@ -23,14 +23,14 @@ The custom [**Format Pending Changes**](#format-pending-changes) command lets yo
 1. Make sure the formatter you selected is installed on your system.  
    - Installation guides: [rubyfmt](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation), [rufo](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation), [standardrb](https://github.com/standardrb/standard#install)
 
-2. Choose which formatter you want to use: **rubyfmt** (default), **rufo** or **standardrb**.  
-   - If you prefer **rufo**, or **standardrb**, set the `"formatto.formatter"` from the appropriate settings JSON, or using the **Formatto: Formatter** option from the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
-   - You can configure at User, Workspace and/or Workspace Folder settings level. Refer to [Settings Precedence](https://code.visualstudio.com/docs/configure/settings#_settings-precedence) documentation for further details.
+2. Choose which formatter you want to use: *rubyfmt* (default), *rufo* or *standardrb*.  
+   - Set the `"formatto.formatter"` from the appropriate settings JSON, or using the **Formatto: Formatter** option from the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
+   - You can configure this at the User, Workspace and/or Workspace Folder settings level. Refer to [Settings Precedence](https://code.visualstudio.com/docs/configure/settings#_settings-precedence) documentation for further details.
 
 3. Ensure that either:
   - executable is available on your system `PATH` (a restart may be required).  
   - the formatter location path is set using `"formatto.rubyfmtPath"`, `"formatto.rufoPath"` or `"formatto.standardrbPath"` settings.
-  - you enable the appropriate `"formatto.rufoPreferBundler"` or `"formatto.standardrbPreferBundler"` setting to enable `bundle exec` use (`rubyfmt` does not support Bundler).
+  - you enable the appropriate `"formatto.rufoPreferBundler"` or `"formatto.standardrbPreferBundler"` setting to enable `bundle exec` use (*rubyfmt* does not support Bundler).
   
   > Whichever way you select, Formatto verifies that the selected formatter is reachable before executing it in the current session for the first time and it will prompt you for action if the given formatter cannot be found.
 
@@ -48,6 +48,7 @@ This is up to you (or your project), but a few notes:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
+| `formatto.additionalSupportedExtensions` | Additional file extensions to accept for formatting, in addition to each formatter's built‑in supported extensions. Applies only to files already recognized as `ruby`, `gemfile`, or `erb`. | |
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. | `false` |
 | `formatto.formatter` | Formatter to use for formatting. | `rubyfmt` |
 | `formatto.formatPendingChanges.includeStaged` | Include staged changes when running **Format Pending Changes**. | `true` |
@@ -66,6 +67,8 @@ If the formatter is not reachable like that, use a path. The following replaceme
 | `formatto.rubyfmtPath` | Path to `rubyfmt`. | `rubyfmt` | 
 | `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
+Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`formatto.additionalSupportedExtensions`](#configuration) to add extra extensions.
+
 ### Rufo
 
 | Setting | Description | Default |
@@ -75,7 +78,9 @@ If the formatter is not reachable like that, use a path. The following replaceme
 | `formatto.rufoPreferBundler` | Use `bundle exec` to run `rufo`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
-Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
+Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`, `.erb`, `.rhtml`. Use [`formatto.additionalSupportedExtensions`](#configuration) to add extra extensions.
+
+Rufo automatically loads `.rufo` [configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
 
 [↑ Back to top](#table-of-contents)
 
@@ -89,7 +94,10 @@ Rufo automatically loads [`.rufo` configuration files](https://github.com/ruby-f
 | `formatto.standardrbPreferBundler` | Use `bundle exec` to run `standardrb`. | `false` |
 | `formatto.verifyStandardrb` | Verify that `standardrb` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
-*Standard Ruby* is different from rubyfmt and rufo as it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
+Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`formatto.additionalSupportedExtensions`](#configuration) to add extra extensions.
+
+#### Save-to-disk behavior
+*Standard Ruby* is different from *rubyfmt* and *rufo* as it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
 
 * *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional file system operations, but avoids an unexpected save of the document and is therefore the default behavior. The extension attempts to clean-up these temporary files right away so they should not build up.
 * *forceSave*: saves the document to disk before formatting it. This is not the default mode because it changes VS Code's standard formatter behavior in a significant way, but it may be preferred if you work on large files (to avoid additional I/O overhead).
