@@ -8,7 +8,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
     return;
   }
 
-  context.log.debug("RangeFormat: Enabled");
+  context.log.debug('RangeFormat: Enabled');
   context.disposables.push(
     vscode.languages.registerDocumentRangeFormattingEditProvider(
       DOCUMENT_SELECTOR,
@@ -23,7 +23,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
  * the indentation. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
-  constructor(private readonly context: ExtensionContext) { }
+  constructor(private readonly context: ExtensionContext) {}
 
   async provideDocumentRangeFormattingEdits(
     document: vscode.TextDocument,
@@ -45,7 +45,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    if (formatter.descriptor.injectsTrailingNewline) {
+    if (formatter.spec.injectsTrailingNewline) {
       if (range.end.line === document.lineCount - 1 && formattedText.endsWith('\n')) {
         formattedText = formattedText.slice(0, -1);
       }

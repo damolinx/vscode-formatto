@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
+import { FormatterName } from './formatterName';
 import { FormatterOptions } from './formatterOptions';
-import { FormatterDescriptor, FormatterName } from './types';
+import { FormatterSpec } from './formatterSpec';
 
 export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
-    public readonly descriptor: FormatterDescriptor,
+    public readonly spec: FormatterSpec,
   ) {}
 
   abstract formatText(
@@ -30,7 +31,7 @@ export abstract class Formatter {
   }
 
   public get id(): FormatterName {
-    return this.descriptor.id;
+    return this.spec.name;
   }
 
   protected isSuccessCode(code: number | null): boolean {
@@ -127,7 +128,7 @@ export abstract class Formatter {
       formattedText = await this.formatText(document, documentText, false, token);
       if (
         formattedText !== undefined &&
-        this.descriptor.injectsTrailingNewline &&
+        this.spec.injectsTrailingNewline &&
         document.uri.scheme === 'vscode-notebook-cell'
       ) {
         formattedText = formattedText.trimEnd();

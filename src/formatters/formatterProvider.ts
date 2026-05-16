@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from './formatter';
+import { FormatterName } from './formatterName';
 import { RubyfmtFormatter } from './rubyfmt';
 import { RufoFormatter } from './rufo';
 import { StandardRbFormatter } from './standardrb';
-import { FormatterName } from './types';
 
 export class FormatterProvider {
   private readonly cachedFormatters: Map<FormatterName, Formatter>;

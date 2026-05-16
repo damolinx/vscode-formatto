@@ -2,12 +2,12 @@ import * as vscode from 'vscode';
 import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from './formatter';
-import { FormatterDescriptor } from './types';
+import { FormatterSpec } from './formatterSpec';
 
-export const RubyfmtDescriptor: FormatterDescriptor = {
-  id: 'rubyfmt',
+export const RubyfmtDescriptor: FormatterSpec = {
+  name: 'rubyfmt',
   injectsTrailingNewline: true,
-  installUrl: 'https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation',
+  docs: { installation: 'https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation' },
   versionArgs: ['--version'],
 };
 

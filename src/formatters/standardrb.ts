@@ -5,12 +5,12 @@ import { join } from 'path';
 import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from './formatter';
-import { FormatterDescriptor } from './types';
+import { FormatterSpec } from './formatterSpec';
 
-export const StandardRbDescriptor: FormatterDescriptor = {
-  id: 'standardrb',
+export const StandardRbDescriptor: FormatterSpec = {
+  name: 'standardrb',
   injectsTrailingNewline: true,
-  installUrl: 'https://github.com/standardrb/standard#install',
+  docs: { installation: 'https://github.com/standardrb/standard#install' },
   versionArgs: ['--version'],
 };
 

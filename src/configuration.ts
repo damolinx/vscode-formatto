@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX } from './constants';
-import { capitalizeFormatterName, FormatterName } from './formatters/types';
+import { capitalizeFormatterName, FormatterName } from './formatters/formatterName';
 import { resolveTokenizedPath } from './utils/pathTokenization';
 
 export class Configuration {

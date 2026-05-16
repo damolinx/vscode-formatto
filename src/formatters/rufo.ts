@@ -2,12 +2,12 @@ import * as vscode from 'vscode';
 import { verifyFormatter } from '../commands/verifyFormatter';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from './formatter';
-import { FormatterDescriptor } from './types';
+import { FormatterSpec } from './formatterSpec';
 
-export const RufoDescriptor: FormatterDescriptor = {
-  id: 'rufo',
+export const RufoDescriptor: FormatterSpec = {
+  name: 'rufo',
   injectsTrailingNewline: true,
-  installUrl: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation',
+  docs: { installation: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation' },
   versionArgs: ['--version'],
 };
 
