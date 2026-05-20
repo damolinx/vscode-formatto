@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
+import { minimatch } from 'minimatch';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
 import { FormatterName } from './formatterName';
@@ -33,6 +34,16 @@ export abstract class Formatter {
 
   protected isBundlerCleanRun(cmd: string, stderr: string) {
     return cmd !== 'bundle' || stderr.trim() === '';
+  }
+
+  public isExcluded(uri: vscode.Uri): boolean {
+    const patterns = this.context.configuration.getExcludePatterns(uri) ?? [];
+    if (patterns.at.length === 0) {
+      return false;
+    }
+
+    const fsPath = uri.fsPath;
+    return patterns.some((pattern) => minimatch(fsPath, pattern, { dot: true }));
   }
 
   protected isSuccessCode(code: number | null): boolean {
@@ -120,8 +131,14 @@ export abstract class Formatter {
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
-    this.context.log.info(`${this.name}: Format document. Path: '${path}'`);
+    if (this.isExcluded(document.uri)) {
+      this.context.log.info(
+        `${this.name}: Skipped document (excluded by pattern). Path: '${path}'`,
+      );
+      return;
+    }
 
+    this.context.log.info(`${this.name}: Format document. Path: '${path}'`);
     let formattedText: string | undefined;
     try {
       formattedText = await this.formatText(
@@ -154,6 +171,11 @@ export abstract class Formatter {
     range: vscode.Range,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
+    if (this.isExcluded(document.uri)) {
+      this.context.log.info(`${this.name}: Skipped (excluded by pattern)`);
+      return;
+    }
+
     const path = vscode.workspace.asRelativePath(document.uri);
     const rangeStr = `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
     this.context.log.info(`${this.name}: Format selection. Path: '${path}' Range: ${rangeStr}`);

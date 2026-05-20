@@ -92,6 +92,11 @@ async function formatRepoPendingChanges(
     }
 
     const formatter = context.formatters.getFor(uri);
+    if (formatter.isExcluded(uri)) {
+      context.log.info(`FormatPendingChanges: Skipped excluded file '${uri.fsPath}'`);
+      continue;
+    }
+
     const document = await vscode.workspace.openTextDocument(uri);
     const formattedText = await formatter.tryFormatDocument(document, token);
     if (formattedText !== undefined) {

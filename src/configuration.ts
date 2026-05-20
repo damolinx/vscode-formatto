@@ -66,6 +66,13 @@ export class Configuration {
   }
 
   /**
+   * Glob patterns for files that should not be formatted.
+   */
+  public getExcludePatterns(scope?: vscode.ConfigurationScope): string[] {
+    return this.getValue<string[]>(scope, 'excludePatterns', []);
+  }
+
+  /**
    * Get {@link getFormatterName configured formatter} additional arguments.
    */
   public getFormatterAdditionalArgs(

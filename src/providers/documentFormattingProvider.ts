@@ -27,8 +27,7 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     const formattedText = await formatter.tryFormatDocument(document, token);
     if (!formattedText) {
       this.context.log.debug(
-        'DocumentFormat: No changes to apply',
-        vscode.workspace.asRelativePath(document.uri),
+        `DocumentFormat(${formatter.name}): No changes to apply. Path: ${vscode.workspace.asRelativePath(document.uri)}`,
       );
       return;
     }

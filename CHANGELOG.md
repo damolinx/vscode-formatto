@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.5
+- Add `formatto.excludePatterns` setting to allow excluding files from formatting using glob patterns (e.g. `**/__package.rb`).
+
 ## 0.4.4
 - Add `formatto.additionalSupportedExtensions` to allow registering additional file extensions for formatting (still editor must be `ruby`, `erb` or `gemfile`).
   - Note that only Rufo supports ERB files.
