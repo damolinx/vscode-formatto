@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { existsSync, promises as fsPromises, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { verifyFormatter } from '../commands/verifyFormatter';
+import { verifyFormatterCore } from '../commands/verifyFormatter';
 import { SUPPORTED_RUBY_EXTENSIONS } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
@@ -57,7 +57,7 @@ export class StandardRbFormatter extends Formatter {
     formatContext: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    if (!(await verifyFormatter(this.context, formatContext.uri, this))) {
+    if (!(await verifyFormatterCore(this.context, this, formatContext.uri))) {
       return;
     }
 

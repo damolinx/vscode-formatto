@@ -35,7 +35,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    const formatter = this.context.formatters.getFor(document.uri);
+    const formatter = this.context.formatters.getFor(document);
     let formattedText = await formatter.tryFormatText(document, range, token);
     if (!formattedText) {
       this.context.log.debug(

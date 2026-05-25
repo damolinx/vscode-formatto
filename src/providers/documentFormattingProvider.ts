@@ -23,7 +23,7 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     _options: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
-    const formatter = this.context.formatters.getFor(document.uri);
+    const formatter = this.context.formatters.getFor(document);
     const formattedText = await formatter.tryFormatDocument(document, token);
     if (!formattedText) {
       this.context.log.debug(

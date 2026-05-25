@@ -36,8 +36,8 @@ export class FormatterProvider {
     return formatter;
   }
 
-  public getFor(uri: vscode.Uri): Formatter {
-    const name = this.context.configuration.getFormatterName(uri);
+  public getFor(scope?: vscode.ConfigurationScope): Formatter {
+    const name = this.context.configuration.getFormatterName(scope);
     return this.get(name);
   }
 }

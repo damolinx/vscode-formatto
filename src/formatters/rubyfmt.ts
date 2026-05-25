@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { verifyFormatter } from '../commands/verifyFormatter';
+import { verifyFormatterCore } from '../commands/verifyFormatter';
 import { SUPPORTED_RUBY_EXTENSIONS } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
@@ -25,7 +25,7 @@ export class RubyfmtFormatter extends Formatter {
     formatContext: FormatContext,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    if (!(await verifyFormatter(this.context, formatContext.uri, this))) {
+    if (!(await verifyFormatterCore(this.context, this, formatContext.uri))) {
       return;
     }
 

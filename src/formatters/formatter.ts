@@ -20,9 +20,13 @@ export abstract class Formatter {
     token?: vscode.CancellationToken,
   ): Promise<string | undefined>;
 
-  public getCwd(uri: vscode.Uri): string {
+  public getCwd(uri: vscode.Uri): string | undefined {
     const folder = vscode.workspace.getWorkspaceFolder(uri);
-    return (folder?.uri ?? vscode.Uri.joinPath(uri, '..')).fsPath;
+    if (!folder) {
+      return;
+    }
+
+    return (folder.uri ?? vscode.Uri.joinPath(uri, '..')).fsPath;
   }
 
   public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
@@ -57,7 +61,7 @@ export abstract class Formatter {
   public resolveRunCommand(
     uri: vscode.Uri,
     options: FormatterOptions,
-  ): { args: string[]; cmd: string; cwd: string } {
+  ): { args: string[]; cmd: string; cwd?: string } {
     const expandedCmd = options.cmd ? [options.cmd] : this.getFormatterCommand(uri);
     const [cmd, ...prefixArgs] = expandedCmd;
     const args = [
