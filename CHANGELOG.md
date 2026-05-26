@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.7
+- Fix: formatting disabled when verification is disabled.
+
 ## 0.4.6
 - Add **Verify Formatter** command.
 

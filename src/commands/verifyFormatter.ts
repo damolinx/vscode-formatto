@@ -60,15 +60,12 @@ export async function verifyFormatterCore(
 
   if (options?.forceVerification) {
     verified.delete(verificationCacheKey);
-  } else {
-    if (!context.configuration.shouldVerifyFormatter(spec.name)) {
-      context.log.info(`${spec.name}: Skipped verification (disabled by setting)`);
-      return;
-    }
-    if (verified.has(verificationCacheKey)) {
-      context.log.debug(`${spec.name}: Skipped verification (already verified)`);
-      return { spec, version: verified.get(verificationCacheKey)! };
-    }
+  } else if (!context.configuration.shouldVerifyFormatter(spec.name)) {
+    context.log.info(`${spec.name}: Skipped verification (disabled by setting)`);
+    return { spec, version: '' };
+  } else if (verified.has(verificationCacheKey)) {
+    context.log.debug(`${spec.name}: Skipped verification (already verified)`);
+    return { spec, version: verified.get(verificationCacheKey)! };
   }
 
   const [cmd, ...args] = command;
