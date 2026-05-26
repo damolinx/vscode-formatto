@@ -2,13 +2,16 @@ import * as vscode from 'vscode';
 import { execFile, ExecFileException } from 'child_process';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from '../formatters/formatter';
+import { FormatterName } from '../formatters/formatterName';
+import { FormatterSpec } from '../formatters/formatterSpec';
 
-const verified = new Set<string>();
+const verified = new Map<string, string>();
 
 export async function verifyFormatter(
   context: ExtensionContext,
   formatter?: Formatter,
   scope?: vscode.ConfigurationScope,
+  options?: { forceVerification?: true },
 ) {
   let targetScope = scope;
   if (!targetScope) {
@@ -39,25 +42,33 @@ export async function verifyFormatter(
 
   const targetUri = targetScope instanceof vscode.Uri ? targetScope : targetScope?.uri;
   const targetFormatter = formatter ?? context.formatters.getFor(targetScope);
-  return verifyFormatterCore(context, targetFormatter, targetUri);
+  const result = await verifyFormatterCore(context, targetFormatter, targetUri, options);
+  if (result) {
+    vscode.window.showInformationMessage(`Found '${result.spec.name}' version ${result.version}`);
+  }
 }
 
 export async function verifyFormatterCore(
   context: ExtensionContext,
   formatter: Formatter,
   uri?: vscode.Uri,
-): Promise<boolean> {
+  options?: { forceVerification?: true },
+): Promise<{ spec: FormatterSpec; version: string } | undefined> {
   const { spec } = formatter;
-  if (!context.configuration.shouldVerifyFormatter(spec.name)) {
-    context.log.info(`${spec.name}: Skipped verification (disabled by setting)`);
-    return true;
-  }
-
   const command = formatter.getFormatterCommand(uri);
-  const verificationCacheKey = `${spec.name}:${command.join(':')}`;
-  if (verified.has(verificationCacheKey)) {
-    context.log.debug(`${spec.name}: Skipped verification (already verified)`);
-    return true;
+  const verificationCacheKey = getVerificationCacheKey(spec, command);
+
+  if (options?.forceVerification) {
+    verified.delete(verificationCacheKey);
+  } else {
+    if (!context.configuration.shouldVerifyFormatter(spec.name)) {
+      context.log.info(`${spec.name}: Skipped verification (disabled by setting)`);
+      return;
+    }
+    if (verified.has(verificationCacheKey)) {
+      context.log.debug(`${spec.name}: Skipped verification (already verified)`);
+      return { spec, version: verified.get(verificationCacheKey)! };
+    }
   }
 
   const [cmd, ...args] = command;
@@ -67,9 +78,10 @@ export async function verifyFormatterCore(
   const cwd = uri && formatter.getCwd(uri);
   const result = await isAvailable(cmd, cwd, args, spec.timeouts?.verificationMs);
   if ('version' in result) {
-    verified.add(verificationCacheKey);
-    context.log.info(`${spec.name}: Version: ${result.version}`);
-    return true;
+    const version = normalizeVersion(result.version, spec.name);
+    verified.set(verificationCacheKey, version);
+    context.log.info(`${spec.name}: Version: ${version}`);
+    return { spec, version };
   }
 
   context.log.error(`${spec.name}: ${getErrorMessage(result.error)}${cwd ? ` Cwd: ${cwd}}` : ''}`);
@@ -103,7 +115,26 @@ export async function verifyFormatterCore(
       break;
   }
 
-  return false;
+  return;
+}
+
+function getErrorMessage(err: ExecFileException): string {
+  switch (err.code) {
+    case 'ENOENT':
+      return `Command not found: ${err.path} (${err.code})`;
+    case 'EACCES':
+      return `Permission denied when executing: ${err.path} (${err.code})`;
+    case 'ETIMEDOUT':
+      return `The command timed out (${err.code})`;
+    case 'EPIPE':
+      return `The process exited unexpectedly (${err.code})`;
+    default:
+      return err.message;
+  }
+}
+
+function getVerificationCacheKey(spec: FormatterSpec, command: string[]) {
+  return `${spec.name}:${command.join(':')}`;
 }
 
 async function isAvailable(
@@ -132,17 +163,7 @@ async function isAvailable(
   });
 }
 
-function getErrorMessage(err: ExecFileException): string {
-  switch (err.code) {
-    case 'ENOENT':
-      return `Command not found: ${err.path} (${err.code})`;
-    case 'EACCES':
-      return `Permission denied when executing: ${err.path} (${err.code})`;
-    case 'ETIMEDOUT':
-      return `The command timed out (${err.code})`;
-    case 'EPIPE':
-      return `The process exited unexpectedly (${err.code})`;
-    default:
-      return err.message;
-  }
+function normalizeVersion(raw: string, formatterName: FormatterName): string {
+  const prefix = formatterName + ' ';
+  return raw.startsWith(prefix) ? raw.slice(prefix.length).trim() : raw.trim();
 }

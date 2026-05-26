@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.6
+- Add **Verify Formatter** command.
+
 ## 0.4.5
 - Add `formatto.excludePatterns` setting to allow excluding files from formatting using glob patterns (e.g. `**/__package.rb`).
 

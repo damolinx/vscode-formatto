@@ -50,6 +50,11 @@
         "title": "Format Pending Changes",
         "category": "Formatto",
         "enablement": "gitOpenRepositoryCount > 0"
+      },
+      {
+        "command": "formatto.verifyFormatter",
+        "title": "Verify Formatter",
+        "category": "Formatto"
       }
     ],
     "configuration": [
