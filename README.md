@@ -133,7 +133,7 @@ Use the **Formatto: Format Pending Changes** command to format all modified Ruby
 If you understand the limitations, the feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart since it would be uncommon to change this setting.
 
 ### Verify Formatter
-Use the **Formatto: Verify Formatter** command to manually re-run the formatter verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification is shown with the detected formatter version. If verification fails, Formatto will offer helpful options such as viewing logs or opening documentation.
+Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification is shown with the detected formatter version. If verification fails, Formatto will offer helpful options such as viewing **Logs** or opening **Documentation**.
 
 [↑ Back to top](#table-of-contents)
 
