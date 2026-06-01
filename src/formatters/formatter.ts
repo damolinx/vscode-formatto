@@ -46,8 +46,8 @@ export abstract class Formatter {
       return false;
     }
 
-    const fsPath = uri.fsPath;
-    return patterns.some((pattern) => minimatch(fsPath, pattern, { dot: true }));
+    const relativePath = vscode.workspace.asRelativePath(uri.fsPath, false);
+    return patterns.some((pattern) => minimatch(relativePath, pattern, { dot: true }));
   }
 
   protected isSuccessCode(code: number | null): boolean {

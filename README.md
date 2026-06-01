@@ -50,7 +50,7 @@ This is up to you (or your project), but a few notes:
 |---------|-------------|---------|
 | `formatto.additionalSupportedExtensions` | Additional file extensions to accept for formatting, in addition to each formatter's built‑in supported extensions. Applies only to files already recognized as `ruby`, `gemfile`, or `erb`. | |
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. | `false` |
-| `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g. `**/__package.rb`. | |
+| `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g. `**/__package.rb`, `vendor/**/*`. | |
 | `formatto.formatter` | Formatter to use for formatting. | `rubyfmt` |
 | `formatto.formatPendingChanges.includeStaged` | Include staged changes when running **Format Pending Changes**. | `true` |
 
