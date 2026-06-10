@@ -12,7 +12,7 @@ export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
-  ) {}
+  ) { }
 
   protected abstract formatText(
     text: string,
@@ -26,7 +26,7 @@ export abstract class Formatter {
       return;
     }
 
-    return (folder.uri ?? vscode.Uri.joinPath(uri, '..')).fsPath;
+    return folder.uri.fsPath;
   }
 
   public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
@@ -95,7 +95,7 @@ export abstract class Formatter {
         stdio: 'pipe',
         timeout: this.spec.timeouts?.executionMs ?? 5000,
       });
-      const cancelSubscription = token?.onCancellationRequested(() => {
+      const disposable = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
         reject(new Error('Formatting canceled'));
       });
@@ -105,10 +105,13 @@ export abstract class Formatter {
 
       child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
       child.stderr.on('data', (chunk) => (stderr += chunk.toString()));
-      child.on('error', (error) => reject(new Error(error.message, { cause: error })));
+      child.on('error', (error) => {
+        disposable?.dispose();
+        reject(new Error(error.message, { cause: error }));
+      });
 
       child.on('close', (code) => {
-        cancelSubscription?.dispose();
+        disposable?.dispose();
         if (token?.isCancellationRequested) {
           return;
         }
