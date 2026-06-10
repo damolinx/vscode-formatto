@@ -11,6 +11,7 @@ export const RubyfmtDescriptor: FormatterSpec = {
   appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation' },
   inputKind: 'stdin',
+  supportsBundler: false,
   supportedExtensions: SUPPORTED_RUBY_EXTENSIONS,
   versionArgs: ['--version'],
 };
@@ -31,9 +32,5 @@ export class RubyfmtFormatter extends Formatter {
 
     const formattedText = await this.run(text, formatContext, {}, token);
     return formattedText;
-  }
-
-  public override getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
-    return [this.context.configuration.getFormatterPath(this.name, scope)];
   }
 }

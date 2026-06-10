@@ -23,6 +23,9 @@ export interface FormatterSpec {
   /** Formatter identifier. */
   readonly name: FormatterName;
 
+  /** Formatter supports Bundler. */
+  readonly supportsBundler: boolean;
+
   /** File extensions that this formatter supports. */
   readonly supportedExtensions: readonly string[];
 

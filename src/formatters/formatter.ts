@@ -12,7 +12,7 @@ export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
-  ) { }
+  ) {}
 
   protected abstract formatText(
     text: string,
@@ -31,7 +31,8 @@ export abstract class Formatter {
 
   public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
     const cmd = this.context.configuration.getFormatterPath(this.name, scope);
-    return this.context.configuration.getPreferBundler(this.name, scope)
+    return this.spec.supportsBundler &&
+      this.context.configuration.getPreferBundler(this.name, scope)
       ? ['bundle', 'exec', cmd]
       : [cmd];
   }

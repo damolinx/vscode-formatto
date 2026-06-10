@@ -11,6 +11,7 @@ export const RufoDescriptor: FormatterSpec = {
   appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation' },
   inputKind: 'stdin',
+  supportsBundler: true,
   supportedExtensions: SUPPORTED_RUBY_EXTENSIONS.concat(['.erb', '.rhtml']),
   versionArgs: ['--version'],
 };
