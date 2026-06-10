@@ -12,7 +12,7 @@ export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
-  ) { }
+  ) {}
 
   protected abstract formatText(
     text: string,

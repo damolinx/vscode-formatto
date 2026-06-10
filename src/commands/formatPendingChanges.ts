@@ -79,9 +79,9 @@ async function formatRepoPendingChanges(
   const changed = includeStaged
     ? [...repo.state.workingTreeChanges, ...repo.state.indexChanges]
     : repo.state.workingTreeChanges;
-  const uris = changed.map((change) => change.uri).filter((uri) => uri.fsPath.endsWith('.rb'));
+  const uris = changed.map((change) => change.uri);
   if (uris.length === 0) {
-    context.log.info(`FormatPendingChanges: No Ruby changes in '${repoDisplayId}'`);
+    context.log.info(`FormatPendingChanges: No changes in '${repoDisplayId}'`);
     return;
   }
 

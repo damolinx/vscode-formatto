@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.9
+- Fix: **Format Pending Changes** command should not limit itself early to `.rb` files.
+
 ## 0.4.8
 - `formatto.excludePatterns` patterns match against workspace‑relative paths - e.g. `vendor/**/*`.
 

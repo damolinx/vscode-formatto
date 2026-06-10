@@ -104,7 +104,10 @@ export class StandardRbFormatter extends Formatter {
     let tmpFilePath: string | undefined;
     try {
       const tmpDirPath = await this.ensureTmpDir();
-      tmpFilePath = join(tmpDirPath, `buffer-${Date.now()}-${Math.random().toString(36)}${extname(context.uri.fsPath)}`);
+      tmpFilePath = join(
+        tmpDirPath,
+        `buffer-${Date.now()}-${Math.random().toString(36)}${extname(context.uri.fsPath)}`,
+      );
       await fsPromises.writeFile(tmpFilePath, text);
       return await this.runStandardRb(
         text,
@@ -129,10 +132,10 @@ export class StandardRbFormatter extends Formatter {
     return formatContext.isRange
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
-        formatContext.uri,
-        'standardrbFormattingMode',
-        'tmpFile',
-      );
+          formatContext.uri,
+          'standardrbFormattingMode',
+          'tmpFile',
+        );
   }
 
   protected override isSuccessCode(code: number | null): boolean {
