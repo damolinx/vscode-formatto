@@ -81,7 +81,7 @@ export async function verifyFormatterCore(
     return { spec, version };
   }
 
-  context.log.error(`${spec.name}: ${getErrorMessage(result.error)}${cwd ? ` Cwd: ${cwd}}` : ''}`);
+  context.log.error(`${spec.name}: ${getErrorMessage(result.error)}${cwd ? ` Cwd: ${cwd}` : ''}`);
   const message =
     cmd === 'bundle'
       ? 'Check your Gemfile and ensure the formatter gem is installed.'
