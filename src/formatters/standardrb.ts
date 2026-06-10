@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { existsSync, promises as fsPromises, rmSync } from 'fs';
 import { tmpdir } from 'os';
-import { join } from 'path';
+import { extname, join } from 'path';
 import { verifyFormatterCore } from '../commands/verifyFormatter';
 import { SUPPORTED_RUBY_EXTENSIONS } from '../constants';
 import { ExtensionContext } from '../extensionContext';
@@ -104,7 +104,7 @@ export class StandardRbFormatter extends Formatter {
     let tmpFilePath: string | undefined;
     try {
       const tmpDirPath = await this.ensureTmpDir();
-      tmpFilePath = join(tmpDirPath, `buffer-${Date.now()}-${Math.random().toString(36)}`);
+      tmpFilePath = join(tmpDirPath, `buffer-${Date.now()}-${Math.random().toString(36)}${extname(context.uri.fsPath)}`);
       await fsPromises.writeFile(tmpFilePath, text);
       return await this.runStandardRb(
         text,
@@ -129,10 +129,10 @@ export class StandardRbFormatter extends Formatter {
     return formatContext.isRange
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
-          formatContext.uri,
-          'standardrbFormattingMode',
-          'tmpFile',
-        );
+        formatContext.uri,
+        'standardrbFormattingMode',
+        'tmpFile',
+      );
   }
 
   protected override isSuccessCode(code: number | null): boolean {
