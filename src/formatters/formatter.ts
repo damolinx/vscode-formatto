@@ -12,7 +12,7 @@ export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
-  ) {}
+  ) { }
 
   protected abstract formatText(
     text: string,
@@ -42,7 +42,7 @@ export abstract class Formatter {
 
   public isExcluded(uri: vscode.Uri): boolean {
     const patterns = this.context.configuration.getExcludePatterns(uri) ?? [];
-    if (patterns.at.length === 0) {
+    if (patterns.length === 0) {
       return false;
     }
 
