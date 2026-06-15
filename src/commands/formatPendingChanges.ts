@@ -39,17 +39,17 @@ async function startFormatPendingChanges(context: ExtensionContext): Promise<voi
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: 'Format Pending changes',
+      title: 'Format Pending Changes',
       cancellable: true,
     },
     async (progress, progressToken) => {
-      progress.report({ message: 'Refreshing git status…' });
+      progress.report({ message: 'Checking Git for pending changes…' });
       const start = Date.now();
       await Promise.race([
         vscode.commands
           .executeCommand('git.refresh')
           .then(() =>
-            context.log.info(`FormatPendingChanges: Refresh git status (${Date.now() - start}ms)`),
+            context.log.info(`FormatPendingChanges: git status (${Date.now() - start}ms)`),
           ),
         new Promise<void>((resolve) => progressToken.onCancellationRequested(resolve)),
       ]);
@@ -59,7 +59,7 @@ async function startFormatPendingChanges(context: ExtensionContext): Promise<voi
         return;
       }
 
-      progress.report({ message: 'Formatting…' });
+      progress.report({ message: 'Formatting pending changes…' });
       await Promise.allSettled(
         api.repositories.map((repo) =>
           formatRepoPendingChanges(context, repo, normalizeForDisplay(repo.rootUri), progressToken),
