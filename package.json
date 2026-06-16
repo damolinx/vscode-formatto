@@ -92,6 +92,11 @@
             ],
             "description": "Select which formatter Formatto should use."
           },
+          "formatto.formatPendingChanges.autoSave": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Automatically save files after formatting when running **Format Pending Changes**."
+          },
           "formatto.formatPendingChanges.includeStaged": {
             "type": "boolean",
             "default": true,

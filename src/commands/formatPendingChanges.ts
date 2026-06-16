@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import type { Repository } from '../../typings/git';
+import type { Change, Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
+import { runWithConcurrencyLimit } from '../utils/async';
 import { getGitApi } from '../utils/git';
 import { normalizeForDisplay } from '../utils/uri';
 
@@ -44,6 +45,7 @@ async function startFormatPendingChanges(context: ExtensionContext): Promise<voi
     },
     async (progress, progressToken) => {
       progress.report({ message: 'Checking Git for pending changes…' });
+
       const start = Date.now();
       await Promise.race([
         vscode.commands
@@ -60,6 +62,7 @@ async function startFormatPendingChanges(context: ExtensionContext): Promise<voi
       }
 
       progress.report({ message: 'Formatting pending changes…' });
+
       await Promise.allSettled(
         api.repositories.map((repo) =>
           formatRepoPendingChanges(context, repo, normalizeForDisplay(repo.rootUri), progressToken),
@@ -75,34 +78,51 @@ async function formatRepoPendingChanges(
   repoDisplayId: string,
   token: vscode.CancellationToken,
 ): Promise<void> {
+  const autoSave = context.configuration.getFormatPendingChangesAutoSave(repo.rootUri);
   const includeStaged = context.configuration.getFormatPendingChangesIncludeStaged(repo.rootUri);
-  const changed = includeStaged
-    ? [...repo.state.workingTreeChanges, ...repo.state.indexChanges]
-    : repo.state.workingTreeChanges;
-  const uris = changed.map((change) => change.uri);
+
+  let uris: vscode.Uri[];
+  if (includeStaged) {
+    const uniqueChanges = new Map<string, Change>();
+    repo.state.indexChanges.forEach((change) => uniqueChanges.set(change.uri.toString(), change));
+    repo.state.workingTreeChanges.forEach((change) => uniqueChanges.set(change.uri.toString(), change));
+    uris = [...uniqueChanges.values()].map(({ uri }) => uri);
+  } else {
+    uris = repo.state.workingTreeChanges.map(({ uri }) => uri);
+  }
+
   if (uris.length === 0) {
     context.log.info(`FormatPendingChanges: No changes in '${repoDisplayId}'`);
     return;
   }
 
-  for (const uri of uris) {
+  await runWithConcurrencyLimit(uris, 4, async (uri) => {
     if (token.isCancellationRequested) {
-      context.log.warn(`FormatPendingChanges: Canceled while processing '${repoDisplayId}'`);
       return;
     }
 
-    const formatter = context.formatters.getFor(uri);
-    if (formatter.isExcluded(uri)) {
-      context.log.info(`FormatPendingChanges: Skipped excluded file '${uri.fsPath}'`);
-      continue;
-    }
+    try {
+      const formatter = context.formatters.getFor(uri);
+      if (formatter.isExcluded(uri)) {
+        context.log.info(`FormatPendingChanges: Skipped excluded file '${uri.fsPath}'`);
+        return;
+      }
 
-    const document = await vscode.workspace.openTextDocument(uri);
-    const formattedText = await formatter.tryFormatDocument(document, token);
-    if (formattedText !== undefined) {
-      await applyDocumentEdit(document, formattedText);
+      const document = await vscode.workspace.openTextDocument(uri);
+      const formattedText = await formatter.tryFormatDocument(document, token);
+
+      if (formattedText !== undefined) {
+        await applyDocumentEdit(document, formattedText);
+
+        if (autoSave) {
+          await document.save();
+        }
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      context.log.error(`FormatPendingChanges: Error formatting '${uri.fsPath}': ${message}`);
     }
-  }
+  });
 }
 
 async function applyDocumentEdit(document: vscode.TextDocument, newText: string): Promise<boolean> {

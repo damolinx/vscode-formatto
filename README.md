@@ -52,6 +52,7 @@ This is up to you (or your project), but a few notes:
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. | `false` |
 | `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g. `**/__package.rb`, `vendor/**/*`. | |
 | `formatto.formatter` | Formatter to use for formatting. | `rubyfmt` |
+| `formatto.formatPendingChanges.autoSave` | Automatically save files after formatting when running **Format Pending Changes**. | `true` |
 | `formatto.formatPendingChanges.includeStaged` | Include staged changes when running **Format Pending Changes**. | `true` |
 
 For every formatter, there is a `formatto.«formatter»Path` setting whose value defaults to the executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. 
@@ -120,7 +121,9 @@ If your project uses another formatter, or you simply want to try Formatto witho
 
 ### Format Pending Changes
 
-Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or when you want to format multiple changed files at once. The command forces a refresh of the repository status known by VS Code, which could add significant overhead on some configurations. Check the [logs](#logs) for timing information.  
+Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or when formatting multiple changed files at once. With `formatto.formatPendingChanges.autoSave` enabled (default), files are saved automatically after formatting.
+
+The command forces a refresh of the repository status known by VS Code, which could add significant overhead on some configurations. Check the [logs](#logs) for timing information.
 
 > This command is available **only** when at least one Git repository is open in the workspace.
 
