@@ -53,7 +53,6 @@ This is up to you (or your project), but a few notes:
 | `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g. `**/__package.rb`, `vendor/**/*`. | |
 | `formatto.formatter` | Formatter to use for formatting. | `rubyfmt` |
 | `formatto.formatPendingChanges.autoSave` | Automatically save files after formatting when running **Format Pending Changes**. | `true` |
-| `formatto.formatPendingChanges.includeStaged` | Include staged changes when running **Format Pending Changes**. | `true` |
 
 For every formatter, there is a `formatto.«formatter»Path` setting whose value defaults to the executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. 
 If the formatter is not reachable like that, use a path. The following replacement tokens are available to define this path:

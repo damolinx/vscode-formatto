@@ -1,5 +1,5 @@
 export async function runWithConcurrencyLimit<T>(
-  items: T[],
+  items: Iterable<T>,
   limit: number,
   fn: (item: T) => Promise<void>,
 ): Promise<void> {

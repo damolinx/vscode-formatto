@@ -117,13 +117,6 @@ export class Configuration {
   }
 
   /**
-   * Whether Format Pending Changes should include staged changes.
-   */
-  public getFormatPendingChangesIncludeStaged(scope?: vscode.ConfigurationScope): boolean {
-    return this.getValue(scope, 'formatPendingChanges.includeStaged', true);
-  }
-
-  /**
    * Whether to run with `bundle exec`.
    */
   public getPreferBundler(formatter: FormatterName, scope?: vscode.ConfigurationScope): boolean {
