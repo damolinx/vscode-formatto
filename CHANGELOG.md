@@ -6,6 +6,7 @@
     - Format files concurrently with a controlled concurrency limit (4).
     - Improve cancellation behavior.
     - Fix: Avoid duplicate formatting of files when both staged and working tree changes are included.
+    - Fix: Avoid internal errors when trying to format non-text files.
 
   ## 0.4.9
   - Fix: **Format Pending Changes** command should not limit itself early to `.rb` files.

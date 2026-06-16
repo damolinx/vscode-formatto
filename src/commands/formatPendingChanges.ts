@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { extname } from 'path';
 import type { Change, Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
 import { runWithConcurrencyLimit } from '../utils/async';
@@ -85,7 +86,9 @@ async function formatRepoPendingChanges(
   if (includeStaged) {
     const uniqueChanges = new Map<string, Change>();
     repo.state.indexChanges.forEach((change) => uniqueChanges.set(change.uri.toString(), change));
-    repo.state.workingTreeChanges.forEach((change) => uniqueChanges.set(change.uri.toString(), change));
+    repo.state.workingTreeChanges.forEach((change) =>
+      uniqueChanges.set(change.uri.toString(), change),
+    );
     uris = [...uniqueChanges.values()].map(({ uri }) => uri);
   } else {
     uris = repo.state.workingTreeChanges.map(({ uri }) => uri);
@@ -103,6 +106,13 @@ async function formatRepoPendingChanges(
 
     try {
       const formatter = context.formatters.getFor(uri);
+
+      const ext = extname(uri.fsPath);
+      if (!formatter.spec.supportedExtensions.includes(ext)) {
+        context.log.info(`FormatPendingChanges: Skipped unsupported file '${uri.fsPath}'`);
+        return;
+      }
+
       if (formatter.isExcluded(uri)) {
         context.log.info(`FormatPendingChanges: Skipped excluded file '${uri.fsPath}'`);
         return;

@@ -110,8 +110,8 @@ export class Configuration {
   }
 
   /**
- * Whether Format Pending Changes should automatically save files after formatting.
- */
+   * Whether Format Pending Changes should automatically save files after formatting.
+   */
   public getFormatPendingChangesAutoSave(scope?: vscode.ConfigurationScope): boolean {
     return this.getValue(scope, 'formatPendingChanges.autoSave', true);
   }
