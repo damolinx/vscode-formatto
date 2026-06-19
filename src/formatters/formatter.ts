@@ -115,7 +115,13 @@ export abstract class Formatter {
         }
 
         this.context.log.info(
-          `> ${cmd} ${args.join(' ')} (${Date.now() - start}ms)${cwd ? ` Cwd: ${cwd}` : ''}`,
+          formatContext.range
+            ? `${this.name}: Format selection. ${formatContext.uri.fsPath}:${formatContext.range.start.line}:${formatContext.range.start.character}-${formatContext.range.end.line}:${formatContext.range.end.character}`
+            : `${this.name}: Format document. ${formatContext.uri.fsPath}`,
+        );
+
+        this.context.log.info(
+          `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''} (${Date.now() - start}ms)${cwd ? ` Cwd: ${cwd}` : ''}`,
         );
         if (this.isSuccessCode(code) && this.isBundlerCleanRun(cmd, stderr)) {
           resolve(stdout !== text ? stdout : undefined);
@@ -135,15 +141,12 @@ export abstract class Formatter {
     document: vscode.TextDocument,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const path = vscode.workspace.asRelativePath(document.uri);
-    this.context.log.info(`${this.name}: Format document. Path: '${path}'`);
     let formattedText: string | undefined;
     try {
       formattedText = await this.formatText(
         document.getText(),
         {
           isDirty: document.isDirty,
-          isRange: false,
           languageId: document.languageId,
           uri: document.uri,
         },
@@ -169,18 +172,14 @@ export abstract class Formatter {
     range: vscode.Range,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const path = vscode.workspace.asRelativePath(document.uri);
-    const rangeStr = `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
-    this.context.log.info(`${this.name}: Format selection. Path: '${path}' Range: ${rangeStr}`);
-
     let formattedText: string | undefined;
     try {
       formattedText = await this.formatText(
         document.getText(range),
         {
           isDirty: document.isDirty,
-          isRange: true,
           languageId: document.languageId,
+          range,
           uri: document.uri,
         },
         token,

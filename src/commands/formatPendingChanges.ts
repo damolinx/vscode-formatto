@@ -18,6 +18,7 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
 
   currentSession = randomUUID().slice(0, 8);
   try {
+    context.log.info(`FormatPendingChanges(${currentSession}): Session start`);
     const result = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
@@ -41,8 +42,8 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     } else {
       throw error;
     }
-  }
-  finally {
+  } finally {
+    context.log.info(`FormatPendingChanges(${currentSession}): Session end`);
     currentSession = undefined;
   }
 }

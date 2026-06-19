@@ -63,7 +63,7 @@ export class StandardRbFormatter extends Formatter {
       return;
     }
 
-    if (!formatContext.isRange && !formatContext.isDirty) {
+    if (!formatContext.range && !formatContext.isDirty) {
       return this.runStandardRb(text, formatContext, true, token);
     }
 
@@ -131,7 +131,7 @@ export class StandardRbFormatter extends Formatter {
   }
 
   private getFormattingMode(formatContext: FormatContext): FormattingMode {
-    return formatContext.isRange
+    return formatContext.range
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
           formatContext.uri,
