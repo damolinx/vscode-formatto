@@ -116,9 +116,7 @@ async function formatPendingChange(
   try {
     const { formatter, reason } = context.formatters.resolveFor(uri);
     if (!formatter) {
-      context.log.warn(
-        `FormatPendingChanges(${currentSession}): ${reason}. Path: ${vscode.workspace.asRelativePath(uri)}`,
-      );
+      context.log.warn(`FormatPendingChanges(${currentSession}): ${reason}. ${uri.fsPath}`);
       return;
     }
 
@@ -133,9 +131,7 @@ async function formatPendingChange(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    context.log.error(
-      `FormatPendingChanges(${currentSession}): ${message}. Path: ${vscode.workspace.asRelativePath(uri)}`,
-    );
+    context.log.error(`FormatPendingChanges(${currentSession}): ${message}. ${uri.fsPath}`);
   }
 }
 

@@ -89,8 +89,7 @@ export class StandardRbFormatter extends Formatter {
     const saved = await document.save();
     if (!saved) {
       this.context.log.warn(
-        'StandardRb: Document save canceled, not formatting',
-        vscode.workspace.asRelativePath(formatContext.uri),
+        `StandardRb: Document save canceled, not formatting. ${formatContext.uri.fsPath}`,
       );
       return;
     }

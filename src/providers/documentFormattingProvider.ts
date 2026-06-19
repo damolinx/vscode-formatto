@@ -24,9 +24,7 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
   ): Promise<vscode.TextEdit[] | undefined> {
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
-      this.context.log.error(
-        `DocumentFormat: ${reason}. Path: ${vscode.workspace.asRelativePath(document.uri)}`,
-      );
+      this.context.log.error(`DocumentFormat: ${reason}. ${document.uri.fsPath}`);
       vscode.window.showErrorMessage(reason);
       return;
     }
@@ -34,7 +32,7 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     const formattedText = await formatter.tryFormatDocument(document, token);
     if (!formattedText) {
       this.context.log.debug(
-        `DocumentFormat(${formatter.name}): No changes to apply. Path: ${vscode.workspace.asRelativePath(document.uri)}`,
+        `DocumentFormat(${formatter.name}): No changes to apply. ${document.uri.fsPath}`,
       );
       return;
     }

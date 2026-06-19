@@ -39,19 +39,14 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
 
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
-      this.context.log.error(
-        `RangeFormat: ${reason}. Path: ${vscode.workspace.asRelativePath(document.uri)}`,
-      );
+      this.context.log.error(`RangeFormat: ${reason}. ${document.uri.fsPath}`);
       vscode.window.showErrorMessage(reason);
       return;
     }
 
     let formattedText = await formatter.tryFormatText(document, range, token);
     if (!formattedText) {
-      this.context.log.debug(
-        'RangeFormat: No changes to apply',
-        vscode.workspace.asRelativePath(document.uri),
-      );
+      this.context.log.debug(`RangeFormat: No changes to apply. ${document.uri.fsPath}`);
       return;
     }
 
