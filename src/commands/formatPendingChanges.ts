@@ -35,7 +35,14 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     ) {
       context.log.show(true);
     }
-  } finally {
+  } catch (error: any) {
+    if (error?.message === 'Cancelled') {
+      context.log.info(`FormatPendingChanges(${currentSession}): Operation was cancelled.`);
+    } else {
+      throw error;
+    }
+  }
+  finally {
     currentSession = undefined;
   }
 }
@@ -64,9 +71,7 @@ async function formatPendingChangesCore(
   );
   const grouped = await groupByWorkspace(api.repositories, token);
   if (grouped.size === 0) {
-    context.log.info(
-      `FormatPendingChanges(${currentSession}): ${token.isCancellationRequested ? 'Cancelled' : 'No pending changes'}.`,
-    );
+    context.log.info(`FormatPendingChanges(${currentSession}): No pending changes.`);
     return succeeded;
   }
 
@@ -86,8 +91,11 @@ async function formatPendingChangesCore(
     const options = {
       save: context.configuration.getFormatPendingChangesAutoSave(workspaceFolder),
     };
-    await runWithConcurrencyLimit(uris, formatter.maxConcurrency, (uri) =>
-      formatPendingChange(context, uri, options, token),
+    await runWithConcurrencyLimit(
+      uris,
+      formatter.maxConcurrency,
+      (uri) => formatPendingChange(context, uri, options, token),
+      token,
     );
   }
 
@@ -107,7 +115,7 @@ async function formatPendingChange(
   try {
     const { formatter, reason } = context.formatters.resolveFor(uri);
     if (!formatter) {
-      context.log.error(
+      context.log.warn(
         `FormatPendingChanges(${currentSession}): ${reason}. Path: ${vscode.workspace.asRelativePath(uri)}`,
       );
       return;
@@ -144,7 +152,7 @@ async function groupByWorkspace(
     createCancellationPromise(token),
   ]);
   if (token.isCancellationRequested) {
-    return workspaceToFilesMap;
+    throw new Error('Cancelled');
   }
 
   for (const {
