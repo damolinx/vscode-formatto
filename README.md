@@ -127,7 +127,7 @@ The command,
 * **refreshes** the respository **status** known to VS Code which could take a significant amount of time in some configurations, e.g. large monorepos. Check the [logs](#logs) for timing information.
 * runs up to **4 concurrent** formatting operations, except when using *standardrb* where a single operation is used (this formatter has a signficant startup cost, its LSP mode could be leveraged but some work is needed for that).
 
-When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (default), files are saved automatically after formatting.
+When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (default), modified files are saved automatically. When disabled, modified files are left unsaved and opened in the editor for manual review.
 
 ### Format Selection
 

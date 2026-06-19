@@ -83,8 +83,11 @@ async function formatPendingChangesCore(
       continue;
     }
 
+    const options = {
+      save: context.configuration.getFormatPendingChangesAutoSave(workspaceFolder),
+    };
     await runWithConcurrencyLimit(uris, formatter.maxConcurrency, (uri) =>
-      formatPendingChange(context, uri, token),
+      formatPendingChange(context, uri, options, token),
     );
   }
 
@@ -94,6 +97,7 @@ async function formatPendingChangesCore(
 async function formatPendingChange(
   context: ExtensionContext,
   uri: vscode.Uri,
+  options: { save: boolean },
   token: vscode.CancellationToken,
 ): Promise<void> {
   if (token.isCancellationRequested) {
@@ -114,15 +118,14 @@ async function formatPendingChange(
 
     if (formattedText !== undefined) {
       await applyDocumentEdit(document, formattedText);
-
-      if (context.configuration.getFormatPendingChangesAutoSave(document.uri)) {
+      if (options.save) {
         await document.save();
       }
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     context.log.error(
-      `FormatPendingChanges(${currentSession}): Error formatting '${uri.fsPath}': ${message}`,
+      `FormatPendingChanges(${currentSession}): ${message}. Path: ${vscode.workspace.asRelativePath(uri)}`,
     );
   }
 }

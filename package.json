@@ -95,7 +95,7 @@
           "formatto.formatPendingChanges.autoSave": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "Automatically save files after formatting when running **Format Pending Changes**."
+            "markdownDescription": "Automatically save files after formatting when running **Format Pending Changes**. When disabled, modified files will be opened in an editor."
           }
         }
       },
