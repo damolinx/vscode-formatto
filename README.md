@@ -120,11 +120,14 @@ If your project uses another formatter, or you simply want to try Formatto witho
 
 ### Format Pending Changes
 
-Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or when formatting multiple changed files at once. With `formatto.formatPendingChanges.autoSave` enabled (default), files are saved automatically after formatting.
+Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or as the last step of preparing a pull request. 
 
-The command forces a refresh of the repository status known by VS Code, which could add significant overhead on some configurations. Check the [logs](#logs) for timing information.
+The command,
+* is available only when **at least one Git repository** is open.
+* **refreshes** the respository **status** known to VS Code which could take a significant amount of time in some configurations, e.g. large monorepos. Check the [logs](#logs) for timing information.
+* runs up to **4 concurrent** formatting operations, except when using *standardrb* where a single operation is used (this formatter has a signficant startup cost, its LSP mode could be leveraged but some work is needed for that).
 
-> This command is available **only** when at least one Git repository is open in the workspace.
+When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (default), files are saved automatically after formatting.
 
 ### Format Selection
 
