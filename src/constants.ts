@@ -8,6 +8,8 @@ export const DOCUMENT_SELECTOR: readonly vscode.DocumentFilter[] = [
   { language: 'ruby' },
 ];
 
+export const MAX_CONCURRENCY = 4;
+
 export const SUPPORTED_RUBY_EXTENSIONS: readonly string[] = [
   '.rb',
   '.rbs',

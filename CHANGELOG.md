@@ -2,12 +2,13 @@
 
   ## 0.4.10
   - **Format Pending Changes** improvements:
-    - Add `formatto.formatPendingChanges.autoSave` to automatically save files after formatting. Defaults to `true`.
-    - Remove `formatto.includeStaged` asthere is no general mapping from a repo to a workspace.
-    - Format files concurrently with a controlled concurrency limit (4).
+    - Format files using limited concurrency of 4, except for standardrb which defaults to 1.
     - Improve cancellation behavior.
-    - Fix: Avoid duplicate formatting of files when both staged and working tree changes are included.
-    - Fix: Avoid internal errors when trying to format non-text files.
+    - Avoid duplicate no-op formatting call when a modified file is also staged.
+    - Do not attempt to open or format non-text files.
+    - Settings:
+      - Add `formatto.formatPendingChanges.autoSave` to automatically save files after formatting. Defaults to `true`.
+      - Remove `formatto.formatPendingChanges.includeStaged`.     
 
   ## 0.4.9
   - Fix: **Format Pending Changes** command should not limit itself early to `.rb` files.

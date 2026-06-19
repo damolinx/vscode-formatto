@@ -1,3 +1,13 @@
+import * as vscode from 'vscode';
+
+export async function createCancellationPromise(
+  token: vscode.CancellationToken,
+): Promise<Promise<never>> {
+  return new Promise((_, reject) => {
+    token.onCancellationRequested(() => reject(new Error('Cancelled')));
+  });
+}
+
 export async function runWithConcurrencyLimit<T>(
   items: Iterable<T>,
   limit: number,

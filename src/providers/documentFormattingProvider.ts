@@ -3,7 +3,6 @@ import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
-  context.log.debug('DocumentFormat: Enabled');
   context.disposables.push(
     vscode.languages.registerDocumentFormattingEditProvider(
       DOCUMENT_SELECTOR,
@@ -23,7 +22,15 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     _options: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
-    const formatter = this.context.formatters.getFor(document);
+    const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
+    if (!formatter) {
+      this.context.log.error(
+        `DocumentFormat: ${reason}. Path: ${vscode.workspace.asRelativePath(document.uri)}`,
+      );
+      vscode.window.showErrorMessage(reason);
+      return;
+    }
+
     const formattedText = await formatter.tryFormatDocument(document, token);
     if (!formattedText) {
       this.context.log.debug(

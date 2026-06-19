@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
-import { minimatch } from 'minimatch';
+import { MAX_CONCURRENCY } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
 import { FormatterName } from './formatterName';
@@ -9,6 +9,8 @@ import { FormatterOptions } from './formatterOptions';
 import { FormatterSpec } from './formatterSpec';
 
 export abstract class Formatter {
+  private resolvedMaxConcurrency?: number;
+
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
@@ -41,18 +43,13 @@ export abstract class Formatter {
     return cmd !== 'bundle' || stderr.trim() === '';
   }
 
-  public isExcluded(uri: vscode.Uri): boolean {
-    const patterns = this.context.configuration.getExcludePatterns(uri) ?? [];
-    if (patterns.length === 0) {
-      return false;
-    }
-
-    const relativePath = vscode.workspace.asRelativePath(uri.fsPath, false);
-    return patterns.some((pattern) => minimatch(relativePath, pattern, { dot: true }));
-  }
-
   protected isSuccessCode(code: number | null): boolean {
     return code === 0;
+  }
+
+  public get maxConcurrency(): number {
+    this.resolvedMaxConcurrency ??= Math.max(1, this.spec.maxConcurrency ?? MAX_CONCURRENCY);
+    return this.resolvedMaxConcurrency;
   }
 
   public get name(): FormatterName {
@@ -139,13 +136,6 @@ export abstract class Formatter {
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const path = vscode.workspace.asRelativePath(document.uri);
-    if (this.isExcluded(document.uri)) {
-      this.context.log.info(
-        `${this.name}: Skipped document (excluded by pattern). Path: '${path}'`,
-      );
-      return;
-    }
-
     this.context.log.info(`${this.name}: Format document. Path: '${path}'`);
     let formattedText: string | undefined;
     try {
@@ -179,11 +169,6 @@ export abstract class Formatter {
     range: vscode.Range,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    if (this.isExcluded(document.uri)) {
-      this.context.log.info(`${this.name}: Skipped (excluded by pattern)`);
-      return;
-    }
-
     const path = vscode.workspace.asRelativePath(document.uri);
     const rangeStr = `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
     this.context.log.info(`${this.name}: Format selection. Path: '${path}' Range: ${rangeStr}`);

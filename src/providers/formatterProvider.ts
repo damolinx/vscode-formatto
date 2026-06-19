@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
+import { extname } from 'path';
+import { minimatch } from 'minimatch';
 import { ExtensionContext } from '../extensionContext';
-import { Formatter } from './formatter';
-import { FormatterName } from './formatterName';
-import { RubyfmtFormatter } from './rubyfmt';
-import { RufoFormatter } from './rufo';
-import { StandardRbFormatter } from './standardrb';
+import { Formatter } from '../formatters/formatter';
+import { FormatterName } from '../formatters/formatterName';
+import { RubyfmtFormatter } from '../formatters/rubyfmt';
+import { RufoFormatter } from '../formatters/rufo';
+import { StandardRbFormatter } from '../formatters/standardrb';
 
 export class FormatterProvider {
   private readonly cachedFormatters: Map<FormatterName, Formatter>;
@@ -39,5 +41,32 @@ export class FormatterProvider {
   public getFor(scope?: vscode.ConfigurationScope): Formatter {
     const name = this.context.configuration.getFormatterName(scope);
     return this.get(name);
+  }
+
+  private isExcluded(uri: vscode.Uri): boolean {
+    const patterns = this.context.configuration.getExcludePatterns(uri) ?? [];
+    if (patterns.length === 0) {
+      return false;
+    }
+
+    const relativePath = vscode.workspace.asRelativePath(uri.fsPath, false);
+    return patterns.some((pattern) => minimatch(relativePath, pattern, { dot: true }));
+  }
+
+  public resolveFor(
+    uri: vscode.Uri,
+  ): { formatter: Formatter; reason?: never } | { formatter?: never; reason: string } {
+    const formatter = this.getFor(uri);
+    const ext = extname(uri.fsPath);
+
+    if (!formatter.spec.supportedExtensions.includes(ext)) {
+      return { reason: 'Unsupported file extension' };
+    }
+
+    if (this.isExcluded(uri)) {
+      return { reason: 'File is excluded' };
+    }
+
+    return { formatter };
   }
 }

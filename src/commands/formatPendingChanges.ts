@@ -1,119 +1,167 @@
 import * as vscode from 'vscode';
-import { extname } from 'path';
+import { randomUUID } from 'crypto';
 import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
-import { runWithConcurrencyLimit } from '../utils/async';
+import { createCancellationPromise, runWithConcurrencyLimit } from '../utils/async';
 import { getGitApi } from '../utils/git';
+import { verifyFormatterCore } from './verifyFormatter';
 
-let isRunning = false;
+let currentSession: string | undefined;
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
-  if (isRunning) {
-    context.log.warn('FormatPendingChanges: command is already running, ignoring new request');
+  if (currentSession) {
+    context.log.warn(
+      `FormatPendingChanges(${currentSession}): command is already running, ignoring new request`,
+    );
     return;
   }
 
-  isRunning = true;
+  currentSession = randomUUID().slice(0, 8);
   try {
-    await startFormatPendingChanges(context);
+    const result = await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Format Pending Changes',
+        cancellable: true,
+      },
+      (progress, progressToken) => formatPendingChangesCore(context, progress, progressToken),
+    );
+    if (
+      !result &&
+      (await vscode.window.showWarningMessage(
+        'Not all files were formatted, check logs for details.',
+        'Show Logs',
+      ))
+    ) {
+      context.log.show(true);
+    }
   } finally {
-    isRunning = false;
+    currentSession = undefined;
   }
 }
 
-async function startFormatPendingChanges(context: ExtensionContext): Promise<void> {
+async function formatPendingChangesCore(
+  context: ExtensionContext,
+  progress: vscode.Progress<{ message?: string }>,
+  token: vscode.CancellationToken,
+): Promise<boolean> {
   const api = getGitApi();
   if (!api) {
-    const message = 'Git support is unavailable';
-    vscode.window.showWarningMessage(message);
-    context.log.warn('FormatPendingChanges:', message);
-    return;
+    context.log.warn(`FormatPendingChanges(${currentSession}): Git API not available.`);
+    return false;
   }
 
+  let succeeded = true;
   if (api.repositories.length === 0) {
-    const message = 'No repositories found in workspace.';
-    vscode.window.showWarningMessage(message);
-    context.log.info('FormatPendingChanges:', message);
-    return;
+    context.log.info(`FormatPendingChanges(${currentSession}): No repositories found in workspace`);
+    return succeeded;
   }
 
-  await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: 'Format Pending Changes',
-      cancellable: true,
-    },
-    async (progress, progressToken) => {
-      progress.report({ message: 'Checking Git for pending changes…' });
-
-      const start = Date.now();
-      await Promise.race([
-        vscode.commands
-          .executeCommand('git.refresh')
-          .then(() =>
-            context.log.info(`FormatPendingChanges: git status (${Date.now() - start}ms)`),
-          ),
-        new Promise<void>((resolve) => progressToken.onCancellationRequested(resolve)),
-      ]);
-
-      if (progressToken.isCancellationRequested) {
-        context.log.info('FormatPendingChanges: Canceled before processing any repo');
-        return;
-      }
-
-      progress.report({ message: 'Formatting pending changes…' });
-
-      await Promise.allSettled(
-        api.repositories.map((repo) => formatRepoPendingChanges(context, repo, progressToken)),
-      );
-    },
+  const start = Date.now();
+  progress.report({ message: 'Checking Git for pending changes…' });
+  context.log.info(
+    `FormatPendingChanges(${currentSession}): Git status checked (${Date.now() - start}ms).`,
   );
+  const grouped = await groupByWorkspace(api.repositories, token);
+  if (grouped.size === 0) {
+    context.log.info(
+      `FormatPendingChanges(${currentSession}): ${token.isCancellationRequested ? 'Cancelled' : 'No pending changes'}.`,
+    );
+    return succeeded;
+  }
+
+  for (const { workspaceFolder, uris } of grouped.values()) {
+    const workspaceName = workspaceFolder?.name ?? 'no workspace';
+    progress.report({ message: `Formatting pending changes for ${workspaceName} files…` });
+
+    const formatter = context.formatters.getFor(workspaceFolder);
+    if (!formatter || !(await verifyFormatterCore(context, formatter, workspaceFolder?.uri))) {
+      context.log.warn(
+        `FormatPendingChanges(${currentSession}): No formatter available for ${workspaceName} files, skipping.`,
+      );
+      succeeded = false;
+      continue;
+    }
+
+    await runWithConcurrencyLimit(uris, formatter.maxConcurrency, (uri) =>
+      formatPendingChange(context, uri, token),
+    );
+  }
+
+  return succeeded;
 }
 
-async function formatRepoPendingChanges(
+async function formatPendingChange(
   context: ExtensionContext,
-  repo: Repository,
+  uri: vscode.Uri,
   token: vscode.CancellationToken,
 ): Promise<void> {
-  const uris = new Map<string, vscode.Uri>(
-    [...repo.state.indexChanges, ...repo.state.workingTreeChanges].map(({ uri }) => [
-      uri.toString(),
-      uri,
-    ]),
-  ).values();
-  await runWithConcurrencyLimit(uris, 1, async (uri) => {
-    if (token.isCancellationRequested) {
+  if (token.isCancellationRequested) {
+    return;
+  }
+
+  try {
+    const { formatter, reason } = context.formatters.resolveFor(uri);
+    if (!formatter) {
+      context.log.error(
+        `FormatPendingChanges(${currentSession}): ${reason}. Path: ${vscode.workspace.asRelativePath(uri)}`,
+      );
       return;
     }
 
-    try {
-      const formatter = context.formatters.getFor(uri);
-      const ext = extname(uri.fsPath);
-      if (!formatter.spec.supportedExtensions.includes(ext)) {
-        context.log.info(`FormatPendingChanges: Skipped unsupported file '${uri.fsPath}'`);
-        return;
+    const document = await vscode.workspace.openTextDocument(uri);
+    const formattedText = await formatter.tryFormatDocument(document, token);
+
+    if (formattedText !== undefined) {
+      await applyDocumentEdit(document, formattedText);
+
+      if (context.configuration.getFormatPendingChangesAutoSave(document.uri)) {
+        await document.save();
       }
-
-      if (formatter.isExcluded(uri)) {
-        context.log.info(`FormatPendingChanges: Skipped excluded file '${uri.fsPath}'`);
-        return;
-      }
-
-      const document = await vscode.workspace.openTextDocument(uri);
-      const formattedText = await formatter.tryFormatDocument(document, token);
-
-      if (formattedText !== undefined) {
-        await applyDocumentEdit(document, formattedText);
-
-        if (context.configuration.getFormatPendingChangesAutoSave(document.uri)) {
-          await document.save();
-        }
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      context.log.error(`FormatPendingChanges: Error formatting '${uri.fsPath}': ${message}`);
     }
-  });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    context.log.error(
+      `FormatPendingChanges(${currentSession}): Error formatting '${uri.fsPath}': ${message}`,
+    );
+  }
+}
+
+async function groupByWorkspace(
+  repositories: Repository[],
+  token: vscode.CancellationToken,
+): Promise<Map<string, { workspaceFolder?: vscode.WorkspaceFolder; uris: vscode.Uri[] }>> {
+  const workspaceToFilesMap = new Map<
+    string,
+    { workspaceFolder?: vscode.WorkspaceFolder; uris: vscode.Uri[] }
+  >();
+
+  await Promise.race([
+    Promise.all(repositories.map((repo) => repo.status())),
+    createCancellationPromise(token),
+  ]);
+  if (token.isCancellationRequested) {
+    return workspaceToFilesMap;
+  }
+
+  for (const {
+    state: { indexChanges, workingTreeChanges },
+  } of repositories) {
+    const uris = new Map(indexChanges.map(({ uri }) => [uri.toString(), uri]));
+    workingTreeChanges.forEach(({ uri }) => uris.set(uri.toString(), uri));
+
+    for (const uri of uris.values()) {
+      const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+      const key = workspaceFolder?.uri?.toString() ?? 'no-workspace';
+      let group = workspaceToFilesMap.get(key);
+      if (!group) {
+        group = { workspaceFolder, uris: [] };
+        workspaceToFilesMap.set(key, group);
+      }
+      group.uris.push(uri);
+    }
+  }
+  return workspaceToFilesMap;
 }
 
 async function applyDocumentEdit(document: vscode.TextDocument, newText: string): Promise<boolean> {

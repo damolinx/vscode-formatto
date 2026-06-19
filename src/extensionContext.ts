@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Configuration } from './configuration';
-import { FormatterProvider } from './formatters/formatterProvider';
+import { FormatterProvider } from './providers/formatterProvider';
 
 export class ExtensionContext {
   public readonly configuration: Configuration;

@@ -14,6 +14,7 @@ export const StandardRbDescriptor: FormatterSpec = {
   appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/standardrb/standard#install' },
   inputKind: 'file',
+  maxConcurrency: 1,
   supportsBundler: true,
   supportedExtensions: SUPPORTED_RUBY_EXTENSIONS,
   timeouts: {

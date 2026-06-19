@@ -4,7 +4,9 @@ import { ExtensionContext } from '../extensionContext';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   if (!context.configuration.enableRangeFormatting) {
-    context.log.info("RangeFormat: Disabled. Use 'formatto.enableRangeFormatting' to enable.");
+    context.log.info(
+      "RangeFormat: Disabled. Use 'formatto.enableRangeFormatting' setting to enable it.",
+    );
     return;
   }
 
@@ -35,7 +37,15 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    const formatter = this.context.formatters.getFor(document);
+    const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
+    if (!formatter) {
+      this.context.log.error(
+        `RangeFormat: ${reason}. Path: ${vscode.workspace.asRelativePath(document.uri)}`,
+      );
+      vscode.window.showErrorMessage(reason);
+      return;
+    }
+
     let formattedText = await formatter.tryFormatText(document, range, token);
     if (!formattedText) {
       this.context.log.debug(
