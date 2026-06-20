@@ -14,7 +14,6 @@ export const StandardRbDescriptor: FormatterSpec = {
   appendsTrailingNewline: true,
   docs: { installation: 'https://github.com/standardrb/standard#install' },
   inputKind: 'file',
-  maxConcurrency: 1,
   supportsBundler: true,
   supportedExtensions: SUPPORTED_RUBY_EXTENSIONS,
   timeouts: {
@@ -133,10 +132,10 @@ export class StandardRbFormatter extends Formatter {
     return formatContext.range
       ? 'tmpFile'
       : this.context.configuration.getValue<FormattingMode>(
-          formatContext.uri,
-          'standardrbFormattingMode',
-          'tmpFile',
-        );
+        formatContext.uri,
+        'standardrbFormattingMode',
+        'tmpFile',
+      );
   }
 
   protected override isSuccessCode(code: number | null): boolean {
