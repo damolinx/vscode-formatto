@@ -9,8 +9,6 @@ import { FormatterOptions } from './formatterOptions';
 import { FormatterSpec } from './formatterSpec';
 
 export abstract class Formatter {
-  private resolvedMaxConcurrency?: number;
-
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
@@ -48,8 +46,7 @@ export abstract class Formatter {
   }
 
   public get maxConcurrency(): number {
-    this.resolvedMaxConcurrency ??= Math.max(1, this.spec.maxConcurrency ?? MAX_CONCURRENCY);
-    return this.resolvedMaxConcurrency;
+    return this.context.configuration.getMaxConcurrency(this.name);
   }
 
   public get name(): FormatterName {

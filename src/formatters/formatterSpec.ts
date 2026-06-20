@@ -20,9 +20,6 @@ export interface FormatterSpec {
    */
   readonly inputKind: 'file' | 'stdin';
 
-  /** Maximum number of concurrent formatting operations. */
-  maxConcurrency?: number;
-
   /** Formatter identifier. */
   readonly name: FormatterName;
 

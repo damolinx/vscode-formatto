@@ -27,8 +27,8 @@ The custom [**Format Pending Changes**](#format-pending-changes) command lets yo
    - Set the `"formatto.formatter"` from the appropriate settings JSON, or using the **Formatto: Formatter** option from the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
    - You can configure this at the User, Workspace and/or Workspace Folder settings level. Refer to [Settings Precedence](https://code.visualstudio.com/docs/configure/settings#_settings-precedence) documentation for further details.
 
-3. Ensure that either:
-  - executable is available on your system `PATH` (a restart may be required).  
+3. Ensure that any of these is true:
+  - the executable is available on your system `PATH` (a restart may be required).  
   - the formatter location path is set using `"formatto.rubyfmtPath"`, `"formatto.rufoPath"` or `"formatto.standardrbPath"` settings.
   - you enable the appropriate `"formatto.rufoPreferBundler"` or `"formatto.standardrbPreferBundler"` setting to enable `bundle exec` use (*rubyfmt* does not support Bundler).
   
@@ -68,6 +68,7 @@ If the formatter is not reachable like that, use a path. The following replaceme
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--header-opt-in`. | |
+| `formatto.rubyfmtMaxConcurrency` | Maximum number of concurrent process to launch (per feature). | 4 |
 | `formatto.rubyfmtPath` | Path to `rubyfmt`. | `rubyfmt` | 
 | `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
@@ -78,6 +79,7 @@ Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`forma
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rufoArgs` | Additional arguments to pass to `rufo`. | |
+| `formatto.rudoMaxConcurrency` | Maximum number of concurrent process to launch (per feature). | 4 |
 | `formatto.rufoPath` | Path to `rufo`. | `rufo` |
 | `formatto.rufoPreferBundler` | Use `bundle exec` to run `rufo`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
@@ -94,6 +96,7 @@ Rufo automatically loads `.rufo` [configuration files](https://github.com/ruby-f
 |---------|-------------|---------|
 | `formatto.standardrbArgs` | Additional arguments to pass to `standardrb`. | |
 | `formatto.standardrbFormattingMode` | Controls how Formatto satisfies StandardRB's requirement to operate on real files. | `tmpFile` |
+| `formatto.standardrbMaxConcurrency` | Maximum number of concurrent process to launch (per feature). | 1 |
 | `formatto.standardrbPath` | Path to `standardrb`. | `standardrb` |
 | `formatto.standardrbPreferBundler` | Use `bundle exec` to run `standardrb`. | `false` |
 | `formatto.verifyStandardrb` | Verify that `standardrb` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
@@ -125,7 +128,7 @@ Use the **Formatto: Format Pending Changes** command to format all modified Ruby
 The command,
 * is available only when **at least one Git repository** is open.
 * **refreshes** the respository **status** known to VS Code which could take a significant amount of time in some configurations, e.g. large monorepos. Check the [logs](#logs) for timing information.
-* runs up to **4 concurrent** formatting operations, except when using *standardrb* where a single operation is used (this formatter has a signficant startup cost, its LSP mode could be leveraged but some work is needed for that).
+* runs up to `formatto.«formatter»MaxConcurrency` formatter processes concurrently.
 
 When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (default), modified files are saved automatically. When disabled, modified files are left unsaved and opened in the editor for manual review.
 
