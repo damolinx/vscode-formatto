@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
-import { MAX_CONCURRENCY } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { FormatContext } from './formatContext';
 import { FormatterName } from './formatterName';
@@ -12,7 +11,7 @@ export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
-  ) { }
+  ) {}
 
   protected abstract formatText(
     text: string,
