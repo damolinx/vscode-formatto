@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { randomUUID } from 'crypto';
 import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
+import { Formatter } from '../formatters/formatter';
+import { validateFormatter } from '../formatters/formatterValidation';
 import { createCancellationPromise, runWithConcurrencyLimit } from '../utils/async';
 import { getGitApi } from '../utils/git';
 import { verifyFormatterCore } from './verifyFormatter';
@@ -89,49 +91,81 @@ async function formatPendingChangesCore(
       continue;
     }
 
-    const options = {
-      save: context.configuration.getFormatPendingChangesAutoSave(workspaceFolder),
-    };
-    await runWithConcurrencyLimit(
-      uris,
-      formatter.maxConcurrency,
-      (uri) => formatPendingChange(context, uri, options, token),
-      token,
-    );
+    await formatWorkspace(context, formatter, workspaceFolder, uris, token);
   }
 
   return succeeded;
 }
 
+async function formatWorkspace(
+  context: ExtensionContext,
+  formatter: Formatter,
+  workspaceFolder: vscode.WorkspaceFolder | undefined,
+  uris: vscode.Uri[],
+  token: vscode.CancellationToken,
+): Promise<void> {
+  const options = {
+    save: context.configuration.getFormatPendingChangesAutoSave(workspaceFolder),
+  };
+
+  const targetUris = uris.filter((uri) => {
+    const reason = validateFormatter(context, formatter, uri);
+    if (reason) {
+      context.log.warn(
+        `FormatPendingChanges(${currentSession}): ${reason}, skipping. ${uri.fsPath}`,
+      );
+      return false;
+    }
+    return true;
+  });
+
+  await runWithConcurrencyLimit(
+    targetUris,
+    formatter.maxConcurrency,
+    (uri) => formatPendingChange(context, formatter, uri, options, token),
+    token,
+  );
+}
+
 async function formatPendingChange(
   context: ExtensionContext,
+  formatter: Formatter,
   uri: vscode.Uri,
   options: { save: boolean },
   token: vscode.CancellationToken,
 ): Promise<void> {
-  if (token.isCancellationRequested) {
-    return;
-  }
-
   try {
-    const { formatter, reason } = context.formatters.resolveFor(uri);
-    if (!formatter) {
-      context.log.warn(`FormatPendingChanges(${currentSession}): ${reason}. ${uri.fsPath}`);
+    const document = await vscode.workspace.openTextDocument(uri);
+    const formattedText = await formatter.tryFormatDocument(document, token);
+    if (formattedText === undefined) {
+      context.log.debug(
+        `FormatPendingChanges(${currentSession}): No changes to apply. ${uri.fsPath}`,
+      );
       return;
     }
 
-    const document = await vscode.workspace.openTextDocument(uri);
-    const formattedText = await formatter.tryFormatDocument(document, token);
+    const fullRange = new vscode.Range(
+      document.positionAt(0),
+      document.positionAt(document.getText().length),
+    );
 
-    if (formattedText !== undefined) {
-      await applyDocumentEdit(document, formattedText);
-      if (options.save) {
-        await document.save();
-      }
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(uri, fullRange, formattedText);
+    if (!(await vscode.workspace.applyEdit(edit))) {
+      context.log.error(
+        `FormatPendingChanges(${currentSession}): Failed to apply edits. ${uri.fsPath}`,
+      );
+      return;
+    }
+
+    if (options.save) {
+      await document.save();
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    context.log.error(`FormatPendingChanges(${currentSession}): ${message}. ${uri.fsPath}`);
+    context.log.error(
+      `FormatPendingChanges(${currentSession}): Failed to format: ${message}. ${uri.fsPath}`,
+    );
   }
 }
 
@@ -170,14 +204,4 @@ async function groupByWorkspace(
     }
   }
   return workspaceToFilesMap;
-}
-
-async function applyDocumentEdit(document: vscode.TextDocument, newText: string): Promise<boolean> {
-  const fullRange = document.validateRange(
-    new vscode.Range(0, 0, document.lineCount, Number.MAX_SAFE_INTEGER),
-  );
-
-  const edit = new vscode.WorkspaceEdit();
-  edit.replace(document.uri, fullRange, newText);
-  return vscode.workspace.applyEdit(edit);
 }

@@ -14,7 +14,7 @@ export abstract class Formatter {
   constructor(
     protected readonly context: ExtensionContext,
     public readonly spec: FormatterSpec,
-  ) {}
+  ) { }
 
   protected abstract formatText(
     text: string,
@@ -116,13 +116,13 @@ export abstract class Formatter {
 
         this.context.log.info(
           formatContext.range
-            ? `${this.name}: Format selection. ${formatContext.uri.fsPath}:${formatContext.range.start.line}:${formatContext.range.start.character}-${formatContext.range.end.line}:${formatContext.range.end.character}`
-            : `${this.name}: Format document. ${formatContext.uri.fsPath}`,
+            ? `${this.name}: Format selection (${Date.now() - start}ms). ${formatContext.uri.fsPath}:${formatContext.range.start.line}:${formatContext.range.start.character}-${formatContext.range.end.line}:${formatContext.range.end.character}`
+            : `${this.name}: Format document (${Date.now() - start}ms). ${formatContext.uri.fsPath}`,
         );
-
-        this.context.log.info(
+        this.context.log.debug(
           `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''} (${Date.now() - start}ms)${cwd ? ` Cwd: ${cwd}` : ''}`,
         );
+
         if (this.isSuccessCode(code) && this.isBundlerCleanRun(cmd, stderr)) {
           resolve(stdout !== text ? stdout : undefined);
         } else {
