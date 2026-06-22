@@ -44,7 +44,7 @@ export class StandardRbFormatter extends Formatter {
     const params = { text: document.getText(range), range, uri: document.uri };
     let newText: string | undefined;
     if (!range && !document.isDirty) {
-      newText = await this.runStandardRb(params, true, token);
+      newText = await this.runStandardRb(params, false, token);
     } else {
       const mode: FormattingMode = this.getFormattingMode(Boolean(range), document.uri);
       this.context.log.debug(`${this.spec.id}: Using formatting mode: '${mode}'`);
@@ -91,7 +91,11 @@ export class StandardRbFormatter extends Formatter {
         `buffer-${Date.now()}-${Math.random().toString(36)}${extname(params.uri.fsPath)}`,
       );
       await fsPromises.writeFile(tmpFilePath, params.text);
-      const newText = await this.runStandardRb(params, false, token);
+      const newText = await this.runStandardRb(
+        { ...params, uri: vscode.Uri.file(tmpFilePath) },
+        false,
+        token,
+      );
       return newText;
     } finally {
       if (tmpFilePath) {
@@ -128,7 +132,7 @@ export class StandardRbFormatter extends Formatter {
   }
 
   private async runStandardRb(
-    params: { text?: string; range?: vscode.Range; uri: vscode.Uri },
+    params: { text: string; range?: vscode.Range; uri: vscode.Uri },
     useOpenDocument: boolean,
     token: vscode.CancellationToken | undefined,
   ): Promise<string | undefined> {
@@ -140,11 +144,15 @@ export class StandardRbFormatter extends Formatter {
       params,
       { args: ['--fix', params.uri.fsPath], errorSource: 'stdout' },
       token,
-    ).catch((reason: Error) => {
-      if (reason.message) {
-        reason.message = reason.message?.replace(/standard:.+?\n\s+/, '');
+    ).catch((reason: Error & { code?: undefined }) => {
+      if (reason.code === 1) {
+        this.context.log.warn(
+          `${this.spec.id}: ${reason.message?.replace(/standard:.+?\n\s+/, '')}`,
+        );
+        return '';
+      } else {
+        throw reason;
       }
-      throw reason;
     });
     if (result === undefined) {
       return;

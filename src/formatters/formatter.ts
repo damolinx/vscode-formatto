@@ -141,7 +141,7 @@ export abstract class Formatter implements vscode.Disposable {
   }
 
   protected async run(
-    { text, range, uri }: { text?: string; range?: vscode.Range; uri: vscode.Uri },
+    { text, range, uri }: { text: string; range?: vscode.Range; uri: vscode.Uri },
     options?: {
       args?: string[];
       env?: NodeJS.ProcessEnv;

@@ -2,11 +2,10 @@
 
   ## Next
   - Default `formatto.excludePatterns` to `[vendor/**]`.
-  - Show a notification when formatting fails instead of silently no-op.
-  - Add a **Show Logs** button to error notifications.
+    - Add a **Show Logs** button to error notifications.
   - `standardrb` improvements:
     - Default concurrency to 4 (great timing gains at a smaller resource consumption hit than expected).
-    - Handle exitCode:1 as failure to format.
+    - Log exitCode:1 as a possible failure to format.
 
   ## 0.4.10
   - Add `formatto.rubyfmtMaxConcurrency`, `formatto.rufoMaxConcurrency`, and `formatto.standardrbMaxConcurrency` to control concurrency-level per formatter.
