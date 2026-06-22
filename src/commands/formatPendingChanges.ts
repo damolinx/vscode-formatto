@@ -18,10 +18,11 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     return;
   }
 
+  let result = true;
   currentSession = randomUUID().slice(0, 8);
   try {
     context.log.info(`FormatPendingChanges(${currentSession}): Session start`);
-    const result = await vscode.window.withProgress(
+    result = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         title: 'Format Pending Changes',
@@ -29,15 +30,6 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
       },
       (progress, progressToken) => formatPendingChangesCore(context, progress, progressToken),
     );
-    if (
-      !result &&
-      (await vscode.window.showWarningMessage(
-        'Not all files were formatted, check logs for details.',
-        'Show Logs',
-      ))
-    ) {
-      context.log.show(true);
-    }
   } catch (error: any) {
     if (error?.message === 'Cancelled') {
       context.log.info(`FormatPendingChanges(${currentSession}): Operation was cancelled.`);
@@ -47,6 +39,18 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
   } finally {
     context.log.info(`FormatPendingChanges(${currentSession}): Session end`);
     currentSession = undefined;
+  }
+  if (!result) {
+    vscode.window
+      .showWarningMessage(
+        'Not all files were formatted, check logs for error details.',
+        'Show Logs',
+      )
+      .then((selection) => {
+        if (selection) {
+          context.log.show(true);
+        }
+      });
   }
 }
 
@@ -91,7 +95,7 @@ async function formatPendingChangesCore(
       continue;
     }
 
-    await formatWorkspace(context, formatter, workspaceFolder, uris, token);
+    succeeded &&= await formatWorkspace(context, formatter, workspaceFolder, uris, token);
   }
 
   return succeeded;
@@ -103,28 +107,32 @@ async function formatWorkspace(
   workspaceFolder: vscode.WorkspaceFolder | undefined,
   uris: vscode.Uri[],
   token: vscode.CancellationToken,
-): Promise<void> {
+): Promise<boolean> {
   const options = {
     save: context.configuration.getFormatPendingChangesAutoSave(workspaceFolder),
   };
 
   const targetUris = uris.filter((uri) => {
     const reason = validateFormatter(context, formatter, uri);
-    if (reason) {
-      context.log.warn(
-        `FormatPendingChanges(${currentSession}): ${reason}, skipping. ${uri.fsPath}`,
-      );
-      return false;
+    if (reason === undefined) {
+      return true;
     }
-    return true;
+    context.log.warn(`FormatPendingChanges(${currentSession}): ${reason}, skipping. ${uri.fsPath}`);
+    return false;
   });
 
+  let succeeded = true;
   await runWithConcurrencyLimit(
     targetUris,
-    formatter.maxConcurrency,
-    (uri) => formatPendingChange(context, formatter, uri, options, token),
+    context.configuration.getMaxConcurrency(formatter.spec.id),
+    (uri) =>
+      formatPendingChange(context, formatter, uri, options, token).then((value) => {
+        succeeded &&= value;
+      }),
     token,
   );
+
+  return succeeded;
 }
 
 async function formatPendingChange(
@@ -133,40 +141,31 @@ async function formatPendingChange(
   uri: vscode.Uri,
   options: { save: boolean },
   token: vscode.CancellationToken,
-): Promise<void> {
+): Promise<boolean> {
+  let succeeded = true;
   try {
     const document = await vscode.workspace.openTextDocument(uri);
-    const formattedText = await formatter.tryFormatDocument(document, token);
-    if (formattedText === undefined) {
+    const formattingEdit = await formatter.formatDocument(document, undefined, token);
+    if (!formattingEdit) {
       context.log.debug(
         `FormatPendingChanges(${currentSession}): No changes to apply. ${uri.fsPath}`,
       );
-      return;
+      return succeeded;
     }
-
-    const fullRange = new vscode.Range(
-      document.positionAt(0),
-      document.positionAt(document.getText().length),
-    );
 
     const edit = new vscode.WorkspaceEdit();
-    edit.replace(uri, fullRange, formattedText);
-    if (!(await vscode.workspace.applyEdit(edit))) {
-      context.log.error(
-        `FormatPendingChanges(${currentSession}): Failed to apply edits. ${uri.fsPath}`,
-      );
-      return;
-    }
-
-    if (options.save) {
-      await document.save();
+    edit.set(uri, [formattingEdit]);
+    if (await vscode.workspace.applyEdit(edit)) {
+      if (options.save) {
+        await document.save();
+      }
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    context.log.error(
-      `FormatPendingChanges(${currentSession}): Failed to format: ${message}. ${uri.fsPath}`,
-    );
+    context.log.error(`FormatPendingChanges(${currentSession}): ${error}. ${uri.fsPath}`);
+    succeeded = false;
   }
+
+  return succeeded;
 }
 
 async function groupByWorkspace(

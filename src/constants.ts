@@ -10,7 +10,7 @@ export const DOCUMENT_SELECTOR: readonly vscode.DocumentFilter[] = [
 
 export const MAX_CONCURRENCY = 4;
 
-export const SUPPORTED_RUBY_EXTENSIONS: readonly string[] = [
+export const COMMON_RUBY_EXTENSIONS: readonly string[] = [
   '.rb',
   '.rbs',
   '.rbi',

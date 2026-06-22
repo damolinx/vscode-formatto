@@ -79,8 +79,10 @@
             "items": {
               "type": "string"
             },
-            "default": [],
-            "markdownDescription": "Glob patterns for files that should not be formatte, e.g. `**/__package.rb`"
+            "default": [
+              "vendor/**"
+            ],
+            "markdownDescription": "Glob patterns for files that should not be formatted, e.g. `**/__package.rb`"
           },
           "formatto.formatter": {
             "type": "string",
@@ -199,7 +201,7 @@
           },
           "formatto.standardrbMaxConcurrency": {
             "type": "number",
-            "default": 1,
+            "default": 4,
             "maximum": 64,
             "minimum": 1,
             "markdownDescription": "Maximum number of `standardrb` processes to run concurrently (when concurrency is supported by a given feature)."

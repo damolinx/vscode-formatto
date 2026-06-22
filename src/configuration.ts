@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { EXTENSION_PREFIX, MAX_CONCURRENCY } from './constants';
-import { capitalizeName, FormatterName } from './formatters/formatterName';
+import { FormatterId } from './formatters/formatterId';
 import { resolveTokenizedPath } from './utils/pathTokenization';
 
 export class Configuration {
@@ -53,7 +53,7 @@ export class Configuration {
    * Get the configuration key for a formatter's executable path.
    * @param withPrefix Whether to include the extension prefix.
    */
-  public formatterPathKey(formatter: FormatterName, withPrefix = false): string {
+  public formatterPathKey(formatter: FormatterId, withPrefix = false): string {
     const key = `${formatter}Path`;
     return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
   }
@@ -73,30 +73,30 @@ export class Configuration {
   }
 
   /**
-   * Get {@link getFormatterName configured formatter} additional arguments.
+   * Get {@link getFormatterId configured formatter} additional arguments.
    */
   public getFormatterAdditionalArgs(
-    formatter: FormatterName,
+    formatter: FormatterId,
     scope?: vscode.ConfigurationScope,
   ): string[] {
     return this.getValue<string[]>(scope, `${formatter}Args`, []);
   }
 
   /**
-   * Get the configured formatter name.
+   * Get the configured formatter ID.
    */
-  public getFormatterName(
+  public getFormatterId(
     scope: vscode.ConfigurationScope | undefined,
-    defaultValue: FormatterName = 'rubyfmt',
-  ): FormatterName {
-    return this.getValue<FormatterName>(scope, 'formatter', defaultValue);
+    defaultValue: FormatterId = 'rubyfmt',
+  ): FormatterId {
+    return this.getValue<FormatterId>(scope, 'formatter', defaultValue);
   }
 
   /**
-   * Get {@link getFormatterName configured formatter} path.
+   * Get {@link getFormatterId configured formatter} path.
    */
   public getFormatterPath(
-    formatter: FormatterName,
+    formatter: FormatterId,
     scope?: vscode.ConfigurationScope,
     resolveTokens = true,
   ): string {
@@ -119,14 +119,14 @@ export class Configuration {
   /**
    * Maximum concurrency level. Defaults to {@link MAX_CONCURRENCY}.
    */
-  public getMaxConcurrency(formatter: FormatterName, scope?: vscode.ConfigurationScope): number {
+  public getMaxConcurrency(formatter: FormatterId, scope?: vscode.ConfigurationScope): number {
     return this.getValue(scope, `${formatter}MaxConcurrency`, MAX_CONCURRENCY);
   }
 
   /**
    * Whether to run with `bundle exec`.
    */
-  public getPreferBundler(formatter: FormatterName, scope?: vscode.ConfigurationScope): boolean {
+  public getPreferBundler(formatter: FormatterId, scope?: vscode.ConfigurationScope): boolean {
     return this.getValue(scope, this.preferBundlerKey(formatter), false);
   }
 
@@ -134,7 +134,7 @@ export class Configuration {
    * Get the configuration key to `preferBundler` setting.
    * @param withPrefix Whether to include the extension prefix.
    */
-  public preferBundlerKey(formatter: FormatterName, withPrefix = false): string {
+  public preferBundlerKey(formatter: FormatterId, withPrefix = false): string {
     const key = `${formatter}PreferBundler`;
     return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
   }
@@ -143,7 +143,7 @@ export class Configuration {
    * Whether formatter should verify that resolved {@link getFormatterPath path}
    * is reachable.
    */
-  public shouldVerifyFormatter(formatter: FormatterName): boolean {
+  public shouldVerifyFormatter(formatter: FormatterId): boolean {
     return this.resolveValue(this.verifyFormatterKey(formatter), true);
   }
 
@@ -152,7 +152,7 @@ export class Configuration {
    * {@link vscode.ConfigurationTarget.Global user settings}.
    */
   public async updateVerifyFormatter(
-    formatter: FormatterName,
+    formatter: FormatterId,
     value: boolean,
     configurationTarget = vscode.ConfigurationTarget.Global,
   ): Promise<void> {
@@ -167,8 +167,8 @@ export class Configuration {
    * Get the configuration key to toggle formatter's verification.
    * @param withPrefix Whether to include the extension prefix.
    */
-  public verifyFormatterKey(formatter: FormatterName, withPrefix = false): string {
-    const key = `verify${capitalizeName(formatter)}`;
+  public verifyFormatterKey(formatter: FormatterId, withPrefix = false): string {
+    const key = `verify${formatter.charAt(0).toUpperCase() + formatter.slice(1)}`;
     return withPrefix ? `${EXTENSION_PREFIX}.${key}` : key;
   }
 }

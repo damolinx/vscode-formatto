@@ -9,8 +9,6 @@ export function registerCommands(context: ExtensionContext): void {
   } = vscode;
   context.disposables.push(
     cr('formatto.formatPendingChanges', () => formatPendingChanges(context)),
-    cr('formatto.verifyFormatter', () =>
-      verifyFormatter(context, undefined, undefined, { forceVerification: true }),
-    ),
+    cr('formatto.verifyFormatter', () => verifyFormatter(context, { forceVerification: true })),
   );
 }

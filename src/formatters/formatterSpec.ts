@@ -1,43 +1,17 @@
-import { FormatterName } from './formatterName';
+import * as vscode from 'vscode';
+import { FormatterId } from './formatterId';
 
-/**
- * Formatter metadata.
- */
 export interface FormatterSpec {
-  /** Whether the formatter always appends a trailing newline. */
-  readonly appendsTrailingNewline: boolean;
+  id: FormatterId;
+  name: string;
 
-  /** Documentation links. */
-  readonly docs?: {
-    /** Installation instructions. */
-    readonly installation?: string;
-  };
+  docs: Readonly<{
+    installation?: vscode.Uri;
+    project?: vscode.Uri;
+  }>;
 
-  /**
-   * Formatter input mode:
-   * - `stdin`: formatter reads document text from stdin.
-   * - `file`: formatter reads the file from disk.
-   */
-  readonly inputKind: 'file' | 'stdin';
+  supportedExtensions: readonly string[];
+  supportedLanguages: readonly string[];
 
-  /** Formatter identifier. */
-  readonly name: FormatterName;
-
-  /** Formatter supports Bundler. */
-  readonly supportsBundler: boolean;
-
-  /** File extensions that this formatter supports. */
-  readonly supportedExtensions: readonly string[];
-
-  /** Timeout settings. */
-  readonly timeouts?: {
-    /** Formatting timeout (ms). */
-    readonly executionMs?: number;
-
-    /** Verification timeout (ms). */
-    readonly verificationMs?: number;
-  };
-
-  /** Arguments used to query the formatter version. */
-  readonly versionArgs?: string[];
+  supportsBundler: boolean;
 }

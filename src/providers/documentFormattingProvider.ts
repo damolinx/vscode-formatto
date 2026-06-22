@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
+import { validateFormatter } from '../formatters/formatterValidation';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
@@ -29,17 +30,42 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
       return;
     }
 
-    const formattedText = await formatter.tryFormatDocument(document, token);
-    if (!formattedText) {
+    const validationReason = validateFormatter(this.context, formatter, document.uri);
+    if (validationReason) {
+      this.context.log.error(
+        `DocumentFormat(${formatter.spec.id}): ${validationReason}. ${document.uri.fsPath}`,
+      );
+      vscode.window.showErrorMessage(validationReason);
+      return;
+    }
+
+    const formattingEdit = await formatter
+      .formatDocument(document, undefined, token)
+      .catch((error) => {
+        this.context.log.error(
+          `DocumentFormat(${formatter.spec.id}): Formatting failed. ${document.uri.fsPath}`,
+          error,
+        );
+        vscode.window
+          .showErrorMessage(
+            error.message ?? 'An unknown error occurred during formatting.',
+            'Show Logs',
+          )
+          .then((selection) => {
+            if (selection) {
+              this.context.log.show(true);
+            }
+          });
+        return;
+      });
+
+    if (!formattingEdit) {
       this.context.log.debug(
-        `DocumentFormat(${formatter.name}): No changes to apply. ${document.uri.fsPath}`,
+        `DocumentFormat(${formatter.spec.id}): No changes to apply. ${document.uri.fsPath}`,
       );
       return;
     }
 
-    const documentRange = document.validateRange(
-      new vscode.Range(0, 0, document.lineCount, Number.MAX_SAFE_INTEGER),
-    );
-    return [vscode.TextEdit.replace(documentRange, formattedText)];
+    return [formattingEdit];
   }
 }

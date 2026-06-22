@@ -1,93 +1,165 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
+import { exitCode } from 'process';
 import { ExtensionContext } from '../extensionContext';
-import { FormatContext } from './formatContext';
-import { FormatterName } from './formatterName';
-import { FormatterOptions } from './formatterOptions';
 import { FormatterSpec } from './formatterSpec';
 
-export abstract class Formatter {
-  constructor(
-    protected readonly context: ExtensionContext,
-    public readonly spec: FormatterSpec,
-  ) {}
+export interface FormatterCommand {
+  cmd: string;
+  args: string[];
+  cwd?: string;
+}
 
-  protected abstract formatText(
-    text: string,
-    context: FormatContext,
+export abstract class Formatter implements vscode.Disposable {
+  protected disposables: vscode.Disposable[];
+
+  protected constructor(
+    public readonly context: ExtensionContext,
+    public readonly spec: FormatterSpec,
+  ) {
+    this.disposables = [];
+  }
+
+  dispose() {
+    vscode.Disposable.from(...this.disposables).dispose();
+  }
+
+  protected buildCommand(
+    scope?: vscode.ConfigurationScope,
+    additionalArgs: string[] = [],
+  ): FormatterCommand {
+    const cmd = this.context.configuration.getFormatterPath(this.spec.id, scope);
+    const scopeUri = scope && (scope instanceof vscode.Uri ? scope : scope.uri);
+    const cwd = scopeUri && vscode.workspace.getWorkspaceFolder(scopeUri)?.uri.fsPath;
+
+    return this.spec.supportsBundler &&
+      this.context.configuration.getPreferBundler(this.spec.id, scope)
+      ? { cmd: 'bundle', args: ['exec', cmd, ...additionalArgs], cwd }
+      : { cmd, args: additionalArgs, cwd };
+  }
+
+  public buildFormatCommand(
+    scope: vscode.ConfigurationScope,
+    additionalArgs: string[] = [],
+  ): FormatterCommand {
+    return this.buildCommand(
+      scope,
+      additionalArgs.concat(
+        this.context.configuration.getFormatterAdditionalArgs(this.spec.id, scope),
+      ),
+    );
+  }
+
+  public buildVersionCommand(scope?: vscode.ConfigurationScope): FormatterCommand {
+    return this.buildCommand(scope, ['--version']);
+  }
+
+  protected abstract format(
+    document: vscode.TextDocument,
+    range?: vscode.Range,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined>;
 
-  public getCwd(uri: vscode.Uri): string | undefined {
-    const folder = vscode.workspace.getWorkspaceFolder(uri);
-    if (!folder) {
+  public async formatDocument(
+    document: vscode.TextDocument,
+    range?: vscode.Range,
+    token?: vscode.CancellationToken,
+  ): Promise<vscode.TextEdit | undefined> {
+    let formattedText = await this.format(document, range, token);
+    if (formattedText === undefined) {
       return;
     }
 
-    return folder.uri.fsPath;
+    if (range || document.uri.scheme === 'vscode-notebook-cell') {
+      formattedText = formattedText.trimEnd();
+    }
+
+    return vscode.TextEdit.replace(
+      range ??
+        new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)),
+      formattedText,
+    );
   }
 
-  public getFormatterCommand(scope?: vscode.ConfigurationScope): string[] {
-    const cmd = this.context.configuration.getFormatterPath(this.name, scope);
-    return this.spec.supportsBundler &&
-      this.context.configuration.getPreferBundler(this.name, scope)
-      ? ['bundle', 'exec', cmd]
-      : [cmd];
-  }
+  public async getVersion(
+    cmd: string,
+    cwd?: string,
+    args: string[] = [],
+    timeout = 1000,
+  ): Promise<
+    | { error: Error & { code: string; path: string }; version?: never }
+    | { error?: never; version: string }
+  > {
+    return new Promise((resolve) => {
+      const child = spawn(cmd, args, { cwd });
 
-  protected isBundlerCleanRun(cmd: string, stderr: string) {
-    return cmd !== 'bundle' || stderr.trim() === '';
-  }
+      let stdout = '';
+      let stderr = '';
+      let finished = false;
 
-  protected isSuccessCode(code: number | null): boolean {
-    return code === 0;
-  }
+      const killTimer = setTimeout(() => {
+        if (!finished) {
+          child.kill();
+        }
+      }, timeout);
 
-  public get maxConcurrency(): number {
-    return this.context.configuration.getMaxConcurrency(this.name);
-  }
+      child.stdout?.on('data', (data) => {
+        stdout += data.toString();
+      });
 
-  public get name(): FormatterName {
-    return this.spec.name;
-  }
+      child.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
 
-  public resolveRunCommand(
-    uri: vscode.Uri,
-    options: FormatterOptions,
-  ): { args: string[]; cmd: string; cwd?: string } {
-    const expandedCmd = options.cmd ? [options.cmd] : this.getFormatterCommand(uri);
-    const [cmd, ...prefixArgs] = expandedCmd;
-    const args = [
-      ...prefixArgs,
-      ...(options.args ?? []),
-      ...this.context.configuration.getFormatterAdditionalArgs(this.name, uri),
-    ];
+      child.on('error', (error: Error) => {
+        clearTimeout(killTimer);
+        finished = true;
+        resolve({ error: error as any });
+      });
 
-    return { args, cmd, cwd: options.cwd ?? this.getCwd(uri) };
+      child.on('close', (code, signal) => {
+        clearTimeout(killTimer);
+        finished = true;
+
+        if (signal) {
+          const error: any = new Error(
+            `Command was killed: ${cmd}${args.length ? ` ${args.join(' ')}` : ''}`,
+          );
+          error.code = signal;
+          error.path = cmd;
+          resolve({ error });
+        } else if (code !== 0) {
+          const error: any = new Error(stderr || `Command failed with exit code ${code}`);
+          error.code = code?.toString();
+          error.path = cmd;
+          resolve({ error });
+        } else {
+          resolve({ version: stdout.trim() || 'unknown' });
+        }
+      });
+    });
   }
 
   protected async run(
-    text: string,
-    formatContext: FormatContext,
-    options: FormatterOptions,
+    { text, range, uri }: { text?: string; range?: vscode.Range; uri: vscode.Uri },
+    options?: {
+      args?: string[];
+      env?: NodeJS.ProcessEnv;
+      errorSource?: 'stderr' | 'stdout';
+      timeoutMs?: number;
+    },
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const reason = this.validateSupported(formatContext.uri, formatContext.languageId);
-    if (reason) {
-      this.context.log.info(`${this.name}: ${reason}`);
-      return;
-    }
-
-    const { args, cmd, cwd } = this.resolveRunCommand(formatContext.uri, options);
+    const { args, cmd, cwd } = this.buildFormatCommand(uri, options?.args);
     const start = Date.now();
     return new Promise<string | undefined>((resolve, reject) => {
       const child = spawn(cmd, args, {
         cwd,
-        env: options.env,
+        env: options?.env,
         shell: false,
         stdio: 'pipe',
-        timeout: this.spec.timeouts?.executionMs ?? 5000,
+        timeout: options?.timeoutMs ?? 5000,
       });
       const disposable = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
@@ -111,95 +183,62 @@ export abstract class Formatter {
         }
 
         this.context.log.info(
-          formatContext.range
-            ? `${this.name}: Format selection (${Date.now() - start}ms). ${formatContext.uri.fsPath}:${formatContext.range.start.line}:${formatContext.range.start.character}-${formatContext.range.end.line}:${formatContext.range.end.character}`
-            : `${this.name}: Format document (${Date.now() - start}ms). ${formatContext.uri.fsPath}`,
+          `${this.spec.id}: Format selection (${Date.now() - start}ms). ${uri.fsPath}${range ? `:${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}` : ''}`,
         );
         this.context.log.debug(
-          `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''} (${Date.now() - start}ms)${cwd ? ` Cwd: ${cwd}` : ''}`,
+          `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''}${cwd ? ` Cwd: ${cwd}` : ''}`,
         );
 
-        if (this.isSuccessCode(code) && this.isBundlerCleanRun(cmd, stderr)) {
+        if (code === 0 && (cmd !== 'bundle' || stderr.trim() === '')) {
           resolve(stdout !== text ? stdout : undefined);
         } else {
           const message = child.killed
-            ? `${cmd} was killed. This can happen if allowed runtime was exceeded.`
-            : `${cmd} exited${code !== null ? ` with code ${code}` : ''}: ${stderr.trim()}`;
-          reject(new Error(message));
+            ? `${this.spec.id} was killed`
+            : `${this.spec.id} exited${code !== null ? `(${code})` : ''}: ${(options?.errorSource === 'stdout' ? stdout : stderr).trim()}`;
+          const error: any = new Error(message);
+          error.code = exitCode;
+          reject(error);
         }
       });
 
-      child.stdin.end(this.spec.inputKind === 'stdin' ? text : undefined);
+      child.stdin.end(text);
     });
   }
 
-  public async tryFormatDocument(
+  public supportsDocument(
     document: vscode.TextDocument,
-    token?: vscode.CancellationToken,
-  ): Promise<string | undefined> {
-    let formattedText: string | undefined;
-    try {
-      formattedText = await this.formatText(
-        document.getText(),
-        {
-          isDirty: document.isDirty,
-          languageId: document.languageId,
-          uri: document.uri,
-        },
-        token,
-      );
-      if (
-        formattedText !== undefined &&
-        this.spec.appendsTrailingNewline &&
-        document.uri.scheme === 'vscode-notebook-cell'
-      ) {
-        formattedText = formattedText.trimEnd();
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : (error?.toString() ?? 'no error message');
-      this.context.log.error(`${this.name}: Failed to format. Error: ${message}`);
+  ): { supported: true; reason?: never } | { reason: string; supported?: never } {
+    if (document.isUntitled) {
+      return this.spec.supportedLanguages.includes(document.languageId)
+        ? { supported: true }
+        : { reason: `Unsupported language '${document.languageId}'` };
     }
-    return formattedText;
+    return this.supportsUri(document.uri);
   }
 
-  public async tryFormatText(
-    document: vscode.TextDocument,
-    range: vscode.Range,
-    token?: vscode.CancellationToken,
-  ): Promise<string | undefined> {
-    let formattedText: string | undefined;
-    try {
-      formattedText = await this.formatText(
-        document.getText(range),
-        {
-          isDirty: document.isDirty,
-          languageId: document.languageId,
-          range,
-          uri: document.uri,
-        },
-        token,
-      );
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : (error?.toString() ?? 'no error message');
-      this.context.log.error(`${this.name}: Failed to format. Error: ${message}`);
-    }
-    return formattedText;
-  }
-
-  protected validateSupported(uri: vscode.Uri, languageId: string): string | undefined {
-    const extension = extname(uri.fsPath).toLowerCase();
-    if (!extension) {
-      return;
+  public supportsUri(
+    uri: vscode.Uri,
+  ): { supported: true; reason?: never } | { reason: string; supported?: never } {
+    const rawExtension = extname(uri.fsPath);
+    if (!rawExtension) {
+      return { reason: 'Unsupported file (no extension)' };
     }
 
-    const additional = this.context.configuration
-      .getAdditionalSupportedExtensions(uri)
-      .map((ext) => ext.toLowerCase());
-    const supported = new Set([...this.spec.supportedExtensions, ...additional]);
-    return supported.has(extension)
-      ? undefined
-      : `Unsupported extension '${extension}' (${languageId})`;
+    let matches: (s: string) => boolean;
+    if (process.platform === 'win32') {
+      const extension = rawExtension.toLowerCase();
+      matches = (s: string) => s.toLowerCase() === extension;
+    } else {
+      matches = (s: string) => s === rawExtension;
+    }
+
+    if (
+      this.spec.supportedExtensions.some(matches) ||
+      this.context.configuration.getAdditionalSupportedExtensions(uri).some(matches)
+    ) {
+      return { supported: true };
+    }
+
+    return { reason: `Unsupported file extension ('${rawExtension}')` };
   }
 }

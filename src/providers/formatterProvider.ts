@@ -1,20 +1,20 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
 import { Formatter } from '../formatters/formatter';
-import { FormatterName } from '../formatters/formatterName';
+import { FormatterId } from '../formatters/formatterId';
 import { validateFormatter } from '../formatters/formatterValidation';
-import { RubyfmtFormatter } from '../formatters/rubyfmt';
-import { RufoFormatter } from '../formatters/rufo';
-import { StandardRbFormatter } from '../formatters/standardrb';
+import { RubyfmtFormatter } from '../formatters/rubyfmt/rubyfmt';
+import { RufoFormatter } from '../formatters/rufo/rufo';
+import { StandardRbFormatter } from '../formatters/standardrb/standardrb';
 
 export class FormatterProvider {
-  private readonly cachedFormatters: Map<FormatterName, Formatter>;
+  private readonly cachedFormatters: Map<FormatterId, Formatter>;
 
   constructor(private readonly context: ExtensionContext) {
     this.cachedFormatters = new Map();
   }
 
-  private createFormatter(name: FormatterName): Formatter {
+  private createFormatter(name: FormatterId): Formatter {
     switch (name) {
       case 'rubyfmt':
         return new RubyfmtFormatter(this.context);
@@ -27,7 +27,7 @@ export class FormatterProvider {
     }
   }
 
-  public get(name: FormatterName): Formatter {
+  public get(name: FormatterId): Formatter {
     let formatter = this.cachedFormatters.get(name);
     if (!formatter) {
       this.context.log.debug(`FormatterProvider: Create formatter '${name}'`);
@@ -38,7 +38,7 @@ export class FormatterProvider {
   }
 
   public getFor(scope?: vscode.ConfigurationScope): Formatter {
-    const name = this.context.configuration.getFormatterName(scope);
+    const name = this.context.configuration.getFormatterId(scope);
     return this.get(name);
   }
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
+import { validateFormatter } from '../formatters/formatterValidation';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   if (!context.configuration.enableRangeFormatting) {
@@ -44,16 +45,21 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    let formattedText = await formatter.tryFormatText(document, range, token);
-    if (!formattedText) {
-      this.context.log.debug(`RangeFormat: No changes to apply. ${document.uri.fsPath}`);
+    const validationReason = validateFormatter(this.context, formatter, document.uri);
+    if (validationReason) {
+      this.context.log.error(
+        `RangeFormat(${formatter.spec.id}): ${validationReason}. ${document.uri.fsPath}`,
+      );
+      vscode.window.showErrorMessage(validationReason);
       return;
     }
 
-    if (formatter.spec.appendsTrailingNewline) {
-      if (range.end.line !== document.lineCount - 1 && formattedText.endsWith('\n')) {
-        formattedText = formattedText.slice(0, -1);
-      }
+    const formattingEdit = await formatter.formatDocument(document, range, token);
+    if (!formattingEdit) {
+      this.context.log.debug(
+        `RangeFormat(${formatter.spec.id}): No changes to apply. ${document.uri.fsPath}`,
+      );
+      return;
     }
 
     const indentation = RangeFormattingEditProvider.getIndentOfFirstPrecedingNonEmptyLine(
@@ -61,15 +67,13 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       range,
     );
     if (indentation > 0 && range.start.character < indentation) {
-      return [
-        vscode.TextEdit.replace(
-          range,
-          RangeFormattingEditProvider.indentText(formattedText, indentation),
-        ),
-      ];
+      formattingEdit.newText = RangeFormattingEditProvider.indentText(
+        formattingEdit.newText,
+        indentation,
+      );
     }
 
-    return [vscode.TextEdit.replace(range, formattedText)];
+    return [formattingEdit];
   }
 
   private static getIndentOfFirstPrecedingNonEmptyLine(
