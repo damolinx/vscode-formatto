@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
-import { exitCode } from 'process';
 import { ExtensionContext } from '../extensionContext';
 import { FormatterSpec } from './formatterSpec';
 
@@ -196,7 +195,7 @@ export abstract class Formatter implements vscode.Disposable {
             ? `${this.spec.id} was killed`
             : `${this.spec.id} exited${code !== null ? `(${code})` : ''}: ${(options?.errorSource === 'stdout' ? stdout : stderr).trim()}`;
           const error: any = new Error(message);
-          error.code = exitCode;
+          error.code = code;
           reject(error);
         }
       });
