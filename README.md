@@ -68,7 +68,7 @@ If the formatter is not reachable like that, use a path. The following replaceme
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--header-opt-in`. | |
-| `formatto.rubyfmtMaxConcurrency` | Maximum number of concurrent process to launch (per feature). | 4 |
+| `formatto.rubyfmtMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
 | `formatto.rubyfmtPath` | Path to `rubyfmt`. | `rubyfmt` | 
 | `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
@@ -79,7 +79,7 @@ Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`forma
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rufoArgs` | Additional arguments to pass to `rufo`. | |
-| `formatto.rudoMaxConcurrency` | Maximum number of concurrent process to launch (per feature). | 4 |
+| `formatto.rudoMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
 | `formatto.rufoPath` | Path to `rufo`. | `rufo` |
 | `formatto.rufoPreferBundler` | Use `bundle exec` to run `rufo`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
@@ -96,7 +96,7 @@ Rufo automatically loads `.rufo` [configuration files](https://github.com/ruby-f
 |---------|-------------|---------|
 | `formatto.standardrbArgs` | Additional arguments to pass to `standardrb`. | |
 | `formatto.standardrbFormattingMode` | Controls how Formatto satisfies StandardRB's requirement to operate on real files. | `tmpFile` |
-| `formatto.standardrbMaxConcurrency` | Maximum number of concurrent process to launch (per feature). | 1 |
+| `formatto.standardrbMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
 | `formatto.standardrbPath` | Path to `standardrb`. | `standardrb` |
 | `formatto.standardrbPreferBundler` | Use `bundle exec` to run `standardrb`. | `false` |
 | `formatto.verifyStandardrb` | Verify that `standardrb` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
