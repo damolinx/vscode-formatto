@@ -25,7 +25,6 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
       this.context.log.error(`DocumentFormat: ${reason}. ${document.uri.fsPath}`);
-      vscode.window.showErrorMessage(reason);
       return;
     }
 
@@ -34,7 +33,6 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
       this.context.log.error(
         `DocumentFormat(${formatter.spec.id}): ${validationReason}. ${document.uri.fsPath}`,
       );
-      vscode.window.showErrorMessage(validationReason);
       return;
     }
 
@@ -45,16 +43,6 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
           `DocumentFormat(${formatter.spec.id}): Formatting failed. ${document.uri.fsPath}`,
           error,
         );
-        vscode.window
-          .showErrorMessage(
-            error.message ?? 'An unknown error occurred during formatting.',
-            'Show Logs',
-          )
-          .then((selection) => {
-            if (selection) {
-              this.context.log.show(true);
-            }
-          });
         return;
       });
 

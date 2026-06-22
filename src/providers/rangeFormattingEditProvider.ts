@@ -40,7 +40,6 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
       this.context.log.error(`RangeFormat: ${reason}. ${document.uri.fsPath}`);
-      vscode.window.showErrorMessage(reason);
       return;
     }
 
@@ -49,7 +48,6 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       this.context.log.error(
         `RangeFormat(${formatter.spec.id}): ${validationReason}. ${document.uri.fsPath}`,
       );
-      vscode.window.showErrorMessage(validationReason);
       return;
     }
 
