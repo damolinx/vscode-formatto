@@ -10,12 +10,16 @@ import { RufoFormatterSpec } from '../formatters/rufo/rufoSpec';
 import { StandardRbFormatter } from '../formatters/standardrb/standardrb';
 import { StandardRbFormatterSpec } from '../formatters/standardrb/standardrbSpec';
 
-export class FormatterProvider {
+export class FormatterProvider implements vscode.Disposable {
   private readonly cachedFormatters: Map<FormatterId, Formatter>;
   private supportedLanguages?: string[];
 
   constructor(private readonly context: ExtensionContext) {
     this.cachedFormatters = new Map();
+  }
+
+  dispose() {
+    vscode.Disposable.from(...this.cachedFormatters.values()).dispose();
   }
 
   private createFormatter(name: FormatterId): Formatter {

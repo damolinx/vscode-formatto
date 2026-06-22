@@ -12,7 +12,7 @@ export class ExtensionContext {
     this.log = vscode.window.createOutputChannel('Formatto', { log: true });
 
     this.formatters = new FormatterProvider(this);
-    this.disposables.push(this.log);
+    this.disposables.push(this.formatters, this.log);
   }
 
   public get disposables(): vscode.Disposable[] {
