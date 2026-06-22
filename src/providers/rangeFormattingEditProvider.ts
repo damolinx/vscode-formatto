@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { validateFormatter } from '../formatters/formatterValidation';
 
@@ -14,7 +13,7 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
   context.log.debug('RangeFormat: Enabled');
   context.disposables.push(
     vscode.languages.registerDocumentRangeFormattingEditProvider(
-      DOCUMENT_SELECTOR,
+      context.formatters.getSupportedLanguages(),
       new RangeFormattingEditProvider(context),
     ),
   );

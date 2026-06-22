@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
-import { DOCUMENT_SELECTOR } from '../constants';
 import { ExtensionContext } from '../extensionContext';
 import { validateFormatter } from '../formatters/formatterValidation';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
     vscode.languages.registerDocumentFormattingEditProvider(
-      DOCUMENT_SELECTOR,
+      context.formatters.getSupportedLanguages(),
       new DocumentFormattingEditProvider(context),
     ),
   );

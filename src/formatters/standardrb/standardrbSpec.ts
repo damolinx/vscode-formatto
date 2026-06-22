@@ -7,7 +7,7 @@ export const StandardRbFormatterSpec: FormatterSpec = {
 
   docs: {
     installation: 'https://github.com/standardrb/standard#install',
-    project: 'https://github.com/standardrb/standard'
+    project: 'https://github.com/standardrb/standard',
   },
 
   supportedExtensions: COMMON_RUBY_EXTENSIONS,
