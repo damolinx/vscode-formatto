@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { FormatterId } from './formatterId';
 
 export interface FormatterSpec {
@@ -6,8 +5,8 @@ export interface FormatterSpec {
   name: string;
 
   docs: Readonly<{
-    installation?: vscode.Uri;
-    project?: vscode.Uri;
+    installation?: string;
+    project?: string;
   }>;
 
   supportedExtensions: readonly string[];

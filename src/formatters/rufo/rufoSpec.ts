@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { COMMON_RUBY_EXTENSIONS } from '../../constants';
 import { FormatterSpec } from '../formatterSpec';
 
@@ -7,9 +6,8 @@ export const RufoFormatterSpec: FormatterSpec = {
   name: 'Rufo',
 
   docs: {
-    installation: vscode.Uri.parse(
-      'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation',
-    ),
+    installation: 'https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation',
+    project: 'https://github.com/ruby-formatter/rufo',
   },
 
   supportedExtensions: COMMON_RUBY_EXTENSIONS.concat(['.erb', '.rhtml']),

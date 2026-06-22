@@ -78,7 +78,7 @@ export async function verifyFormatterCore(
     command.cmd === 'bundle'
       ? 'Check your Gemfile and ensure the formatter gem is installed.'
       : 'The formatter may be missing or incompatible with this system.';
-  const items = spec.docs?.installation
+  const items = spec.docs.installation
     ? ['Show Logs', 'Documentation', "Don't ask again"]
     : ['Show Logs', "Don't ask again"];
 
@@ -89,7 +89,7 @@ export async function verifyFormatterCore(
 
   switch (selection) {
     case 'Documentation':
-      vscode.env.openExternal(spec.docs.installation!);
+      vscode.env.openExternal(vscode.Uri.parse(spec.docs.installation!));
       break;
 
     case "Don't ask again":
