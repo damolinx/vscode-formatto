@@ -4,7 +4,11 @@ import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
 import { Formatter } from '../formatters/formatter';
 import { validateFormatter } from '../formatters/formatterValidation';
-import { createCancellationPromise, runWithConcurrencyLimit } from '../utils/async';
+import {
+  CancellationError,
+  createCancellationPromise,
+  runWithConcurrencyLimit,
+} from '../utils/async';
 import { getGitApi } from '../utils/git';
 import { verifyFormatterCore } from './verifyFormatter';
 
@@ -31,8 +35,8 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
       (progress, progressToken) => formatPendingChangesCore(context, progress, progressToken),
     );
   } catch (error: any) {
-    if (error?.message === 'Cancelled') {
-      context.log.info(`FormatPendingChanges(${currentSession}): Operation was cancelled.`);
+    if (error instanceof CancellationError) {
+      context.log.info(`FormatPendingChanges(${currentSession}): ${error.message}`);
     } else {
       throw error;
     }
@@ -182,7 +186,7 @@ async function groupByWorkspace(
     createCancellationPromise(token),
   ]);
   if (token.isCancellationRequested) {
-    throw new Error('Cancelled');
+    throw new CancellationError();
   }
 
   for (const {
