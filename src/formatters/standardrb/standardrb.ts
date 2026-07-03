@@ -111,18 +111,19 @@ export class StandardRbFormatter extends Formatter {
     formattingRange: boolean,
     scope: vscode.ConfigurationScope,
   ): FormattingMode {
-    return formattingRange
-      ? 'tmpFile'
-      : this.context.configuration.getValue<FormattingMode>(
-          scope,
-          'standardrbFormattingMode',
-          'tmpFile',
-        );
+    if (formattingRange) {
+      return 'tmpFile';
+    }
+    return this.context.configuration.getValue<FormattingMode>(
+      scope,
+      'standardrbFormattingMode',
+      'tmpFile',
+    );
   }
 
   private async runStandardRb(
     params: { text: string; range?: vscode.Range; uri: vscode.Uri },
-    useOpenDocument: boolean,
+    openDocument: boolean,
     token: vscode.CancellationToken | undefined,
   ): Promise<string | undefined> {
     if (token?.isCancellationRequested) {
@@ -131,7 +132,7 @@ export class StandardRbFormatter extends Formatter {
 
     const result = await this.run(
       params,
-      { args: ['--fix', params.uri.fsPath], errorSource: 'stdout' },
+      { args: ['--fix', params.uri.fsPath], errorStream: 'stdout' },
       token,
     ).catch((reason: Error & { code?: undefined }) => {
       if (reason.code === 1) {
@@ -147,7 +148,7 @@ export class StandardRbFormatter extends Formatter {
       return;
     }
 
-    if (useOpenDocument) {
+    if (openDocument) {
       const document = await vscode.workspace.openTextDocument(params.uri);
       return document.getText();
     }

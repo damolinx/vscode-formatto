@@ -50,32 +50,30 @@ export async function verifyFormatterCore(
   options?: { forceVerification?: true },
 ): Promise<{ spec: FormatterSpec; version: string } | undefined> {
   const { spec } = formatter;
-  const command = formatter.buildVersionCommand(uri);
-  const verificationCacheKey = getVerificationCacheKey(spec, [command.cmd, ...command.args]);
+  const { cmd, args, cwd } = formatter.buildVersionCommand(uri);
+  const verifiedKey = getVerificationCacheKey(spec, [cmd, ...args]);
 
   if (options?.forceVerification) {
-    verified.delete(verificationCacheKey);
-  } else if (verified.has(verificationCacheKey)) {
+    verified.delete(verifiedKey);
+  } else if (verified.has(verifiedKey)) {
     context.log.trace(`${spec.id}: Skipped verification (already verified)`);
-    return { spec, version: verified.get(verificationCacheKey)! };
+    return { spec, version: verified.get(verifiedKey)! };
   } else if (!context.configuration.shouldVerifyFormatter(spec.id)) {
     context.log.trace(`${spec.id}: Skipped verification (disabled by setting)`);
     return { spec, version: '' };
   }
 
-  const { error, version } = await formatter.getVersion(command.cmd, command.cwd, command.args);
+  const { error, version } = await formatter.getVersion(cmd, cwd, args);
   if (version !== undefined) {
     const normalizedVersion = normalizeVersion(version, spec.id);
-    verified.set(verificationCacheKey, normalizedVersion);
+    verified.set(verifiedKey, normalizedVersion);
     context.log.info(`${spec.id}: Version: ${normalizedVersion}`);
     return { spec, version: normalizedVersion };
   }
 
-  context.log.error(
-    `${spec.id}: ${getErrorMessage(error)}${command.cwd ? ` Cwd: ${command.cwd}` : ''}`,
-  );
+  context.log.error(`${spec.id}: ${getErrorMessage(error)}${cwd ? ` Cwd: ${cwd}` : ''}`);
   const message =
-    command.cmd === 'bundle'
+    cmd === 'bundle'
       ? 'Check your Gemfile and ensure the formatter gem is installed.'
       : 'The formatter may be missing or incompatible with this system.';
   const items = spec.docs.installation

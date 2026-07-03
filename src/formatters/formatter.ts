@@ -74,11 +74,11 @@ export abstract class Formatter implements vscode.Disposable {
       formattedText = formattedText.trimEnd();
     }
 
-    return vscode.TextEdit.replace(
-      range ??
-        new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)),
-      formattedText,
-    );
+    return vscode.TextEdit.replace(range ?? this.getFullDocumentRange(document), formattedText);
+  }
+
+  private getFullDocumentRange(document: vscode.TextDocument): vscode.Range {
+    return new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
   }
 
   public async getVersion(
@@ -144,7 +144,7 @@ export abstract class Formatter implements vscode.Disposable {
     options?: {
       args?: string[];
       env?: NodeJS.ProcessEnv;
-      errorSource?: 'stderr' | 'stdout';
+      errorStream?: 'stderr' | 'stdout';
     },
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
@@ -191,7 +191,7 @@ export abstract class Formatter implements vscode.Disposable {
         } else {
           const message = child.killed
             ? `${this.spec.id} was killed`
-            : `${this.spec.id} exited${code !== null ? `(${code})` : ''}: ${(options?.errorSource === 'stdout' ? stdout : stderr).trim()}`;
+            : `${this.spec.id} exited${code !== null ? `(${code})` : ''}: ${(options?.errorStream === 'stdout' ? stdout : stderr).trim()}`;
           const error: any = new Error(message);
           error.code = code;
           reject(error);
