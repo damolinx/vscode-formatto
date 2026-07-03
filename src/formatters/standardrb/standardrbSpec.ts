@@ -14,4 +14,9 @@ export const StandardRbFormatterSpec: FormatterSpec = {
   supportedLanguages: ['gemfile', 'ruby'],
 
   supportsBundler: true,
+
+  timeouts: {
+    formatting: 10000,
+    version: 5000,
+  },
 };

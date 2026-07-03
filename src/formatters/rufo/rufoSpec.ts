@@ -1,5 +1,5 @@
 import { COMMON_RUBY_EXTENSIONS } from '../../constants';
-import { FormatterSpec } from '../formatterSpec';
+import { DEFAULT_FORMATTER_TIMEOUTS, FormatterSpec } from '../formatterSpec';
 
 export const RufoFormatterSpec: FormatterSpec = {
   id: 'rufo',
@@ -13,4 +13,6 @@ export const RufoFormatterSpec: FormatterSpec = {
   supportedExtensions: COMMON_RUBY_EXTENSIONS.concat(['.erb', '.rhtml']),
   supportedLanguages: ['gemfile', 'erb', 'ruby'],
   supportsBundler: true,
+
+  timeouts: DEFAULT_FORMATTER_TIMEOUTS,
 };

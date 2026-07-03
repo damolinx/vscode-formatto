@@ -119,18 +119,6 @@ export class StandardRbFormatter extends Formatter {
         );
   }
 
-  public override getVersion(
-    cmd: string,
-    cwd?: string,
-    args: string[] = [],
-    timeout = 5000, // Longer default timeout
-  ): Promise<
-    | { error: Error & { code: string; path: string }; version?: never }
-    | { error?: never; version: string }
-  > {
-    return super.getVersion(cmd, cwd, args, timeout);
-  }
-
   private async runStandardRb(
     params: { text: string; range?: vscode.Range; uri: vscode.Uri },
     useOpenDocument: boolean,

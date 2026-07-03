@@ -85,7 +85,6 @@ export abstract class Formatter implements vscode.Disposable {
     cmd: string,
     cwd?: string,
     args: string[] = [],
-    timeout = 1000,
   ): Promise<
     | { error: Error & { code: string; path: string }; version?: never }
     | { error?: never; version: string }
@@ -101,7 +100,7 @@ export abstract class Formatter implements vscode.Disposable {
         if (!finished) {
           child.kill();
         }
-      }, timeout);
+      }, this.spec.timeouts.version);
 
       child.stdout?.on('data', (data) => {
         stdout += data.toString();
@@ -146,7 +145,6 @@ export abstract class Formatter implements vscode.Disposable {
       args?: string[];
       env?: NodeJS.ProcessEnv;
       errorSource?: 'stderr' | 'stdout';
-      timeoutMs?: number;
     },
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
@@ -158,7 +156,7 @@ export abstract class Formatter implements vscode.Disposable {
         env: options?.env,
         shell: false,
         stdio: 'pipe',
-        timeout: options?.timeoutMs ?? 5000,
+        timeout: this.spec.timeouts.formatting,
       });
       const disposable = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');

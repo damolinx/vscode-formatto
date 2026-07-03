@@ -1,5 +1,5 @@
 import { COMMON_RUBY_EXTENSIONS } from '../../constants';
-import { FormatterSpec } from '../formatterSpec';
+import { DEFAULT_FORMATTER_TIMEOUTS, FormatterSpec } from '../formatterSpec';
 
 export const RubyfmtFormatterSpec: FormatterSpec = {
   id: 'rubyfmt',
@@ -14,4 +14,6 @@ export const RubyfmtFormatterSpec: FormatterSpec = {
   supportedLanguages: ['gemfile', 'ruby'],
 
   supportsBundler: false,
+
+  timeouts: DEFAULT_FORMATTER_TIMEOUTS,
 };
