@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { randomUUID } from 'crypto';
 import { existsSync, promises as fsPromises, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { extname, join } from 'path';
@@ -88,7 +89,7 @@ export class StandardRbFormatter extends Formatter {
       const tmpDirPath = await this.ensureTmpDir();
       tmpFilePath = join(
         tmpDirPath,
-        `buffer-${Date.now()}-${Math.random().toString(36)}${extname(params.uri.fsPath)}`,
+        `buffer-${Date.now()}-${randomUUID().slice(0, 8)}${extname(params.uri.fsPath)}`,
       );
       await fsPromises.writeFile(tmpFilePath, params.text);
       const newText = await this.runStandardRb(
