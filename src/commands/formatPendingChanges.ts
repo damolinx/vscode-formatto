@@ -197,7 +197,7 @@ async function groupByWorkspace(
 
     for (const uri of uris.values()) {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-      const key = workspaceFolder?.uri?.toString() ?? 'no-workspace';
+      const key = workspaceFolder?.uri.toString() ?? 'no-workspace';
       let group = workspaceToFilesMap.get(key);
       if (!group) {
         group = { workspaceFolder, uris: [] };
