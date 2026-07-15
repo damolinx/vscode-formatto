@@ -29,7 +29,6 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     result = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'Format Pending Changes',
         cancellable: true,
       },
       (progress, progressToken) => formatPendingChangesCore(context, progress, progressToken),
@@ -44,6 +43,7 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     context.log.info(`FormatPendingChanges(${currentSession}): Session end`);
     currentSession = undefined;
   }
+
   if (!result) {
     vscode.window
       .showWarningMessage(
