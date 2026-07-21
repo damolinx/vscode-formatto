@@ -1,5 +1,8 @@
   # Changelog
 
+  ## 0.4.12
+  - Upgrade minimum VS Code version to 1.125.
+
   ## 0.4.11
   - Default `formatto.excludePatterns` to `[vendor/**]`.
     - Add a **Show Logs** button to error notifications.
