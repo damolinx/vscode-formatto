@@ -4,7 +4,10 @@ import { Formatter } from '../formatters/formatter';
 import { FormatterId } from '../formatters/formatterId';
 import { FormatterSpec } from '../formatters/formatterSpec';
 
-const verified = new Map<string, string>();
+type VerificationCacheKey = string & {
+  readonly __verificationCacheKey: unique symbol;
+};
+const verifiedVersions = new Map<VerificationCacheKey, string>();
 
 export async function verifyFormatter(
   context: ExtensionContext,
@@ -51,13 +54,13 @@ export async function verifyFormatterCore(
 ): Promise<{ spec: FormatterSpec; version: string } | undefined> {
   const { spec } = formatter;
   const { cmd, args, cwd } = formatter.buildVersionCommand(uri);
-  const verifiedKey = getVerificationCacheKey(spec, [cmd, ...args]);
+  const verifiedKey = getVerificationCacheKey(spec, { cmd, args, cwd });
 
   if (options?.forceVerification) {
-    verified.delete(verifiedKey);
-  } else if (verified.has(verifiedKey)) {
+    verifiedVersions.delete(verifiedKey);
+  } else if (verifiedVersions.has(verifiedKey)) {
     context.log.trace(`${spec.id}: Skipped verification (already verified)`);
-    return { spec, version: verified.get(verifiedKey)! };
+    return { spec, version: verifiedVersions.get(verifiedKey)! };
   } else if (!context.configuration.shouldVerifyFormatter(spec.id)) {
     context.log.trace(`${spec.id}: Skipped verification (disabled by setting)`);
     return { spec, version: '' };
@@ -66,7 +69,7 @@ export async function verifyFormatterCore(
   const { error, version } = await formatter.getVersion(cmd, cwd, args);
   if (version !== undefined) {
     const normalizedVersion = normalizeVersion(version, spec.id);
-    verified.set(verifiedKey, normalizedVersion);
+    verifiedVersions.set(verifiedKey, normalizedVersion);
     context.log.info(`${spec.id}: Version: ${normalizedVersion}`);
     return { spec, version: normalizedVersion };
   }
@@ -120,8 +123,11 @@ function getErrorMessage(error: Error & { code: string; path: string }): string 
   }
 }
 
-function getVerificationCacheKey(spec: FormatterSpec, command: string[]) {
-  return `${spec.id}:${command.join(':')}`;
+function getVerificationCacheKey(
+  spec: FormatterSpec,
+  { cmd, args, cwd }: { cmd: string; args: string[]; cwd?: string },
+): VerificationCacheKey {
+  return `${spec.id}:${cwd ?? ''}:${cmd}:${args.join(':')}` as VerificationCacheKey;
 }
 
 function normalizeVersion(raw: string, formatterId: FormatterId): string {
