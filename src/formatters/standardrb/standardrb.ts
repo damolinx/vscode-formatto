@@ -4,7 +4,7 @@ import { existsSync, promises as fsPromises, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { extname, join } from 'path';
 import { ExtensionContext } from '../../extensionContext';
-import { Formatter } from '../formatter';
+import { Formatter, RunParams } from '../formatter';
 import { StandardRbFormatterSpec } from './standardrbSpec';
 
 export type FormattingMode = 'forceSave' | 'tmpFile';
@@ -64,7 +64,7 @@ export class StandardRbFormatter extends Formatter {
   }
 
   private async formatAfterSave(
-    params: { text: string; range?: vscode.Range; uri: vscode.Uri },
+    params: RunParams,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     const document = await vscode.workspace.openTextDocument(params.uri);
@@ -81,7 +81,7 @@ export class StandardRbFormatter extends Formatter {
   }
 
   private async formatWithTemporaryFile(
-    params: { text: string; range?: vscode.Range; uri: vscode.Uri },
+    params: RunParams,
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
     let tmpFilePath: string | undefined;
@@ -93,7 +93,7 @@ export class StandardRbFormatter extends Formatter {
       );
       await fsPromises.writeFile(tmpFilePath, params.text);
       const newText = await this.runStandardRb(
-        { ...params, uri: vscode.Uri.file(tmpFilePath) },
+        { ...params, scopeUri: params.uri, uri: vscode.Uri.file(tmpFilePath) },
         false,
         token,
       );
@@ -122,7 +122,7 @@ export class StandardRbFormatter extends Formatter {
   }
 
   private async runStandardRb(
-    params: { text: string; range?: vscode.Range; uri: vscode.Uri },
+    params: RunParams,
     openDocument: boolean,
     token: vscode.CancellationToken | undefined,
   ): Promise<string | undefined> {

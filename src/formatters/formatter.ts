@@ -10,6 +10,13 @@ export interface FormatterCommand {
   cwd?: string;
 }
 
+export interface RunParams {
+  text: string;
+  range?: vscode.Range;
+  scopeUri?: vscode.ConfigurationScope;
+  uri: vscode.Uri;
+}
+
 export abstract class Formatter implements vscode.Disposable {
   protected disposables: vscode.Disposable[];
 
@@ -140,7 +147,7 @@ export abstract class Formatter implements vscode.Disposable {
   }
 
   protected async run(
-    { text, range, uri }: { text: string; range?: vscode.Range; uri: vscode.Uri },
+    { text, range, scopeUri, uri }: RunParams,
     options?: {
       args?: string[];
       env?: NodeJS.ProcessEnv;
@@ -148,8 +155,9 @@ export abstract class Formatter implements vscode.Disposable {
     },
     token?: vscode.CancellationToken,
   ): Promise<string | undefined> {
-    const { args, cmd, cwd } = this.buildFormatCommand(uri, options?.args);
-    const start = Date.now();
+    const { id } = this.spec;
+    const { args, cmd, cwd } = this.buildFormatCommand(scopeUri ?? uri, options?.args);
+    const startTime = Date.now();
     return new Promise<string | undefined>((resolve, reject) => {
       const child = spawn(cmd, args, {
         cwd,
@@ -179,19 +187,26 @@ export abstract class Formatter implements vscode.Disposable {
           return;
         }
 
-        this.context.log.info(
-          `${this.spec.id}: Format ${range ? 'selection' : 'document'} (${Date.now() - start}ms). ${uri.fsPath}${range ? `:${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}` : ''}`,
-        );
-        this.context.log.debug(
-          `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''}${cwd ? ` Cwd: ${cwd}` : ''}`,
-        );
+        const time = Date.now() - startTime;
+        if (range) {
+          const { start, end } = range;
+          const rangeText = `${start.line}${start.character ? `:${start.character}` : ''}-${end.line}${end.character ? `:${end.character}` : ''}`;
+          this.context.log.info(`${id}: Format selection (${time}ms). ${uri.fsPath}:${rangeText}`);
+        } else {
+          this.context.log.info(`${id}: Format document (${time}ms). ${uri.fsPath}`);
+        }
 
+        const executionInfo = `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''}${cwd ? ` Cwd: ${cwd}` : ''}`;
         if (code === 0 && (cmd !== 'bundle' || stderr.trim() === '')) {
+          this.context.log.debug(executionInfo);
           resolve(stdout !== text ? stdout : undefined);
         } else {
+          const normalizedError = (
+            options?.errorStream === 'stdout' ? stdout.trim() || stderr : stderr
+          ).trim();
           const message = child.killed
-            ? `${this.spec.id} was killed`
-            : `${this.spec.id} exited${code !== null ? `(${code})` : ''}: ${(options?.errorStream === 'stdout' ? stdout : stderr).trim()}`;
+            ? `${id} was killed`
+            : `${id} exited${code !== null ? `(${code})` : ''}\n${executionInfo}\n${normalizedError}`;
           const error: any = new Error(message);
           error.code = code;
           reject(error);
