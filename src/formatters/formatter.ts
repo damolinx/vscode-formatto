@@ -180,7 +180,7 @@ export abstract class Formatter implements vscode.Disposable {
         }
 
         this.context.log.info(
-          `${this.spec.id}: Format selection (${Date.now() - start}ms). ${uri.fsPath}${range ? `:${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}` : ''}`,
+          `${this.spec.id}: Format ${range ? 'selection' : 'document'} (${Date.now() - start}ms). ${uri.fsPath}${range ? `:${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}` : ''}`,
         );
         this.context.log.debug(
           `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''}${cwd ? ` Cwd: ${cwd}` : ''}`,
