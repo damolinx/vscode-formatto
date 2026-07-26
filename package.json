@@ -1,7 +1,7 @@
 {
   "name": "formatto",
   "displayName": "Formatto",
-  "description": "A flexible Ruby formatter for VS Code, supporting rubyfmt, rufo and standardrb.",
+  "description": "A flexible Ruby formatter for VS Code, supporting rubyfmt, rufo, and standardrb.",
   "author": "damolinx",
   "publisher": "damolinx",
   "license": "Apache-2.0",
@@ -67,12 +67,12 @@
               "pattern": "^\\..+$"
             },
             "default": [],
-            "markdownDescription": "Additional file extensions to accept for formatting, in addition to the [formatter](command:workbench.action.openSettings?%5B%22formatto.formatter%22%5D)'s built-in supported extensions. These extensions only apply to files whose language is already recognized as `ruby`, `gemfile`, or `erb`. Your selected formatter must still support the file syntax; otherwise formatting will fail (see logs)."
+            "markdownDescription": "Additional file extensions to accept for formatting, in addition to the [formatter](command:workbench.action.openSettings?%5B%22formatto.formatter%22%5D)'s built-in supported extensions. These extensions only apply to files whose language is recognized as `ruby`, `gemfile`, or `erb`. Your selected formatter must still support the file syntax; otherwise formatting will fail (see logs)."
           },
           "formatto.enableRangeFormatting": {
             "type": "boolean",
             "default": false,
-            "markdownDescription": "Enable **experimental** support of the **Format Selection** command (requires restart). `rubyfmt` does not support this natively so formatting may be inaccurate or differ from **Format Document**."
+            "markdownDescription": "Enable **experimental** support for the **Format Selection** command (requires restart). `rubyfmt` does not support this natively, so formatting may be inaccurate or differ from **Format Document**."
           },
           "formatto.excludePatterns": {
             "type": "array",
@@ -82,7 +82,7 @@
             "default": [
               "vendor/**"
             ],
-            "markdownDescription": "Glob patterns for files that should not be formatted, e.g. `**/__package.rb`"
+            "markdownDescription": "Glob patterns for files that should not be formatted, e.g. `**/__package.rb`. See [Glob Patterns](https://code.visualstudio.com/docs/editor/codebasics#_advanced-search-options) for syntax."
           },
           "formatto.formatter": {
             "type": "string",
@@ -194,7 +194,7 @@
             ],
             "default": "tmpFile",
             "markdownEnumDescriptions": [
-              "Write the current editor contents to a temporary file, format and apply changes back.",
+              "Write the current editor contents to a temporary file, format it, and apply the changes back.",
               "Force-save the current editor to disk before formatting."
             ],
             "markdownDescription": "`standardrb` can only format files on disk, so Formatto satisfies this requirement using the selected behavior whenever the target editor has pending changes."
@@ -222,7 +222,7 @@
           "formatto.verifyStandardrb": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "Verify that `standardrbPath` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.standardrbPath%22%5D)."
+            "markdownDescription": "Verify that `standardrb` is available at the resolved [path](command:workbench.action.openSettings?%5B%22formatto.standardrbPath%22%5D)."
           }
         }
       }
