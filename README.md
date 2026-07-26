@@ -1,8 +1,8 @@
 # Formatto
 
-Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is **multi‑root** aware, allowing each workspace folder to use its own formatter and configuration.
+Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is **multi‑root** aware, allowing each workspace folder to configure its own formatter.
 
-In simple terms, the extension enables the built‑in [**Format Document**](#format-document) command for any Ruby file, allowing `editor.formatOnSave` to work with Ruby files. Ruby formatters do not support range formatting, so Formatto uses a heuristic to enable the [**Format Selection**](#format-selection) command. While useful, it has edge cases and therefore disabled by default to avoid confusion. It can be enabled with a simple [configuration](#configuration) change.
+In simple terms, the extension enables the built‑in [**Format Document**](#format-document) command for Ruby files, allowing `editor.formatOnSave` to work with Ruby files. Ruby formatters do not support range formatting, so Formatto uses a heuristic to enable the [**Format Selection**](#format-selection) command. While useful, it has edge cases, so it is therefore disabled by default to avoid confusion. It can be enabled with a simple [configuration](#configuration) change.
 
 The custom [**Format Pending Changes**](#format-pending-changes) command lets you format all Ruby files with pending changes in your current Git repository, streamlining cleanup before staging or committing.
 
@@ -20,54 +20,49 @@ The custom [**Format Pending Changes**](#format-pending-changes) command lets yo
 
 ## Getting Started
 
-1. Make sure the formatter you selected is installed on your system.  
+1. Make sure your preferred formatter is installed on your system.  
    - Installation guides: [rubyfmt](https://github.com/fables-tales/rubyfmt?tab=readme-ov-file#installation), [rufo](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#installation), [standardrb](https://github.com/standardrb/standard#install)
 
-2. Choose which formatter you want to use: *rubyfmt* (default), *rufo* or *standardrb*.  
-   - Set the `"formatto.formatter"` from the appropriate settings JSON, or using the **Formatto: Formatter** option from the [Settings editor](https://code.visualstudio.com/docs/configure/settings#_settings-editor).
-   - You can configure this at the User, Workspace and/or Workspace Folder settings level. Refer to [Settings Precedence](https://code.visualstudio.com/docs/configure/settings#_settings-precedence) documentation for further details.
+2. Configure Formatto to use your formatter with the `formatto.formatter` setting (*rubyfmt* is the default if omitted).
+   - You can configure this at the User, Workspace, or Workspace Folder settings level. Refer to [Settings Precedence](https://code.visualstudio.com/docs/configure/settings#_settings-precedence) documentation for further details.
 
-3. Ensure that any of these is true:
-  - the executable is available on your system `PATH` (a restart may be required).  
-  - the formatter location path is set using `"formatto.rubyfmtPath"`, `"formatto.rufoPath"` or `"formatto.standardrbPath"` settings.
-  - you enable the appropriate `"formatto.rufoPreferBundler"` or `"formatto.standardrbPreferBundler"` setting to enable `bundle exec` use (*rubyfmt* does not support Bundler).
+3. Ensure that Formatto can locate the selected formatter. Any one of the following options is sufficient:
+
+   - The formatter executable is available on your system `PATH`. If it was added while VS Code was already running, restart VS Code.
+   - The formatter executable path is configured using `formatto.rubyfmtPath`, `formatto.rufoPath`, or `formatto.standardrbPath`.
+   - Either `formatto.rufoPreferBundler` or `formatto.standardrbPreferBundler` is enabled to run the formatter via `bundle exec` (*rubyfmt* does not support Bundler).
   
-  > Whichever way you select, Formatto verifies that the selected formatter is reachable before executing it in the current session for the first time and it will prompt you for action if the given formatter cannot be found.
+   Whichever option you choose, Formatto verifies that it can run the selected formatter once per session and prompts for action if the formatter cannot be found.
 
 Once configured, use the built‑in **Format Document** command, or enable **Editor: Format on Save** to format automatically on save. See [Format Selection](#format-selection) for details on formatting a selection range.
 
-### Choosing a formatter
-This is up to you (or your project), but a few notes:
-- **rubyfmt** provides deterministic, configuration‑free formatting. This is the **default** formatter used.
-- **rufo** supports `.rufo` configuration and offers customizable formatting style.
-- **standardrb** provides deterministic, configuration‑free formatting. Because it runs RuboCop rather than using a dedicated formatter, it is typically an order of magnitude slower than *rubyfmt* or *rufo* (as it is not used in LSP mode).
-
-[↑ Back to top](#table-of-contents)
-
 ## Configuration
+
+The following settings apply regardless of which formatter is selected.
 
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.additionalSupportedExtensions` | Additional file extensions to accept for formatting, in addition to each formatter's built‑in supported extensions. Applies only to files already recognized as `ruby`, `gemfile`, or `erb`. | |
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. | `false` |
-| `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g. `**/__package.rb`, `vendor/**/*`. | |
-| `formatto.formatter` | Formatter to use for formatting. | `rubyfmt` |
+| `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g., `**/__package.rb`, `vendor/**/*`. | |
+| `formatto.formatter` | Formatter to use. | `rubyfmt` |
 | `formatto.formatPendingChanges.autoSave` | Automatically save files after formatting when running **Format Pending Changes**. | `true` |
 
-For every formatter, there is a `formatto.«formatter»Path` setting whose value defaults to the executable name, e.g. `rubyfmt`, which is resolved from the system `PATH`. 
-If the formatter is not reachable like that, use a path. The following replacement tokens are available to define this path:
+For every formatter, there is a `formatto.«formatter»Path` setting whose value defaults to the executable name, e.g., `rubyfmt`, which is resolved from the system `PATH`. If the formatter cannot be located through `PATH`, configure an explicit executable path instead. The following replacement tokens are available when defining this path:
 
-* `${userHome}`: User home directory  
-* `${workspaceFolder}`: Workspace folder containing the file being formatted
+* `${userHome}`: Home directory of the current user.
+* `${workspaceFolder}`: Workspace folder containing the file being formatted.
 
 #### Exclude Patterns
-`formatto.excludePatterns` lets you prevent specific files from being formatted. Patterns use standard glob syntax (via `minimatch`) and are matched against the full file path. If a file matches any pattern, Formatto skips it entirely. This is useful for files that should never be rewritten, such as generated sources or special Ruby files like `__package.rb`.
+`formatto.excludePatterns` lets you prevent specific files from being formatted. This is useful for files that should never be rewritten, such as generated sources or special Ruby files like `__package.rb`.
+
+Patterns use `minimatch` glob syntax and are matched against the full file path. If a file matches any pattern, Formatto skips formatting it. 
 
 ### Rubyfmt
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g. `--header-opt-in`. | |
+| `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g., `--header-opt-in`. | |
 | `formatto.rubyfmtMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
 | `formatto.rubyfmtPath` | Path to `rubyfmt`. | `rubyfmt` | 
 | `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
@@ -79,14 +74,14 @@ Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`forma
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rufoArgs` | Additional arguments to pass to `rufo`. | |
-| `formatto.rudoMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
+| `formatto.rufoMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
 | `formatto.rufoPath` | Path to `rufo`. | `rufo` |
-| `formatto.rufoPreferBundler` | Use `bundle exec` to run `rufo`. | `false` |
+| `formatto.rufoPreferBundler` | Prefer running `rufo` via `bundle exec`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
 Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`, `.erb`, `.rhtml`. Use [`formatto.additionalSupportedExtensions`](#configuration) to add extra extensions.
 
-Rufo automatically loads `.rufo` [configuration files](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) when present.
+Rufo automatically loads `.rufo` configuration files when present. See the [Rufo documentation](https://github.com/ruby-formatter/rufo?tab=readme-ov-file#configuration) for details.
 
 [↑ Back to top](#table-of-contents)
 
@@ -95,21 +90,21 @@ Rufo automatically loads `.rufo` [configuration files](https://github.com/ruby-f
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.standardrbArgs` | Additional arguments to pass to `standardrb`. | |
-| `formatto.standardrbFormattingMode` | Controls how Formatto satisfies StandardRB's requirement to operate on real files. | `tmpFile` |
+| `formatto.standardrbFormattingMode` | Controls how Formatto satisfies `standardrb`'s requirement to operate on real files. | `tmpFile` |
 | `formatto.standardrbMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
 | `formatto.standardrbPath` | Path to `standardrb`. | `standardrb` |
-| `formatto.standardrbPreferBundler` | Use `bundle exec` to run `standardrb`. | `false` |
+| `formatto.standardrbPreferBundler` | Prefer running `standardrb` via `bundle exec`. | `false` |
 | `formatto.verifyStandardrb` | Verify that `standardrb` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
 Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`formatto.additionalSupportedExtensions`](#configuration) to add extra extensions.
 
 #### Save-to-disk behavior
-*Standard Ruby* is different from *rubyfmt* and *rufo* as it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
+*Standard Ruby* differs from *rubyfmt* and *rufo* because it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
 
-* *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional file system operations, but avoids an unexpected save of the document and is therefore the default behavior. The extension attempts to clean-up these temporary files right away so they should not build up.
+* *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional file system operations, but avoids an unexpected save of the document and is therefore the default behavior. The extension attempts to clean up these temporary files immediately, so they should not accumulate.
 * *forceSave*: saves the document to disk before formatting it. This is not the default mode because it changes VS Code's standard formatter behavior in a significant way, but it may be preferred if you work on large files (to avoid additional I/O overhead).
 
-Whenever the editor has no pending changes, `standardrb` runs directly against the file on disk and lets the editor detect the change.
+When the editor has no pending changes, `standardrb` runs directly against the file on disk, allowing VS Code to detect the resulting content change.
 
 [↑ Back to top](#table-of-contents)
 
@@ -117,31 +112,31 @@ Whenever the editor has no pending changes, `standardrb` runs directly against t
 
 ### Format Document
 
-When Formatto is set as the **default formatter** for Ruby files, the built‑in **Format Document** command automatically uses it. This also applies to **Format on Save**.
+When Formatto is set as the **default formatter** for supported Ruby files, the built‑in **Format Document** command automatically uses it. This also applies to **Format on Save**.
 
-If your project uses another formatter, or you simply want to try Formatto without switching defaults, you can run it on demand using the built‑in command **Format Document With…**. This lets you choose Formatto for a single formatting operation without modifying your workspace settings. This is the recommended way to test Formatto in projects that have not fully migrated yet.
+If your project uses another formatter, or you simply want to try Formatto without switching defaults, you can run it on demand using the built‑in command **Format Document With…**. This lets you choose Formatto for a single formatting operation without modifying your workspace settings. This is the recommended way to try Formatto in projects that have not fully migrated yet.
 
 ### Format Pending Changes
 
-Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or as the last step of preparing a pull request. 
+Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or as the final step before opening a pull request. 
 
-The command,
+The command:
 * is available only when **at least one Git repository** is open.
-* **refreshes** the respository **status** known to VS Code which could take a significant amount of time in some configurations, e.g. large monorepos. Check the [logs](#logs) for timing information.
+* **refreshes** the repository status known to VS Code. This could take a significant amount of time in some configurations, e.g., large monorepos. Check the [logs](#logs) for timing information.
 * runs up to `formatto.«formatter»MaxConcurrency` formatter processes concurrently.
 
 When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (default), modified files are saved automatically. When disabled, modified files are left unsaved and opened in the editor for manual review.
 
 ### Format Selection
 
- Formatto implements **Format Selection** by sending the selected range to the formatter as if it were the full document, then applying a heuristic to map the result back. Ruby formatters normally operate only on complete, syntactically valid code; incomplete or broken selections are not currently expanded or repaired by the **heuristic**, so no change is applied in those cases (see the logs for details). This feature is **experimental** and results may not match **Format Document**. 
+ Formatto implements **Format Selection** by sending the selected range to the formatter as if it were the full document, then applying a heuristic to map the result back. Ruby formatters normally operate only on complete, syntactically valid code. Incomplete or broken selections are not currently expanded or repaired by the heuristic, so no change is applied in those cases (see the logs for details). This feature is **experimental** and results may not match **Format Document**. 
 
-> **DO NOT** report issues with selection‑formatting to the formatter projects. No Ruby formatter supports formatting arbitrary ranges of a file.
+> **DO NOT** report issues with selection formatting to the formatter projects. No Ruby formatter supports formatting arbitrary ranges of a file.
 
-If you understand the limitations, the feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart since it would be uncommon to change this setting.
+If you understand the limitations, the feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart.
 
 ### Verify Formatter
-Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification is shown with the detected formatter version. If verification fails, Formatto will offer helpful options such as viewing **Logs** or opening **Documentation**.
+Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification displays the detected formatter version.If verification fails, Formatto offers troubleshooting options such as viewing **Logs** or opening **Documentation**..
 
 [↑ Back to top](#table-of-contents)
 
