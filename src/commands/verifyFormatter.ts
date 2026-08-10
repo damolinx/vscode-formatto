@@ -83,27 +83,27 @@ export async function verifyFormatterCore(
     ? ['Show Logs', 'Documentation', "Don't ask again"]
     : ['Show Logs', "Don't ask again"];
 
-  const selection = await vscode.window.showWarningMessage(
-    `Failed to run '${spec.name}'. ${message}`,
-    ...items,
-  );
+  // DO NOT await, otherwise it locks callers
+  vscode.window
+    .showWarningMessage(`Failed to run '${spec.name}'. ${message}`, ...items)
+    .then(async (selection) => {
+      switch (selection) {
+        case 'Documentation':
+          void vscode.env.openExternal(vscode.Uri.parse(spec.docs.installation!));
+          break;
 
-  switch (selection) {
-    case 'Documentation':
-      vscode.env.openExternal(vscode.Uri.parse(spec.docs.installation!));
-      break;
+        case "Don't ask again":
+          await context.configuration.updateVerifyFormatter(spec.id, false);
+          context.log.warn(
+            `Verify(${spec.id}): Verification disabled via ${context.configuration.verifyFormatterKey(spec.id, true)} setting.`,
+          );
+          break;
 
-    case "Don't ask again":
-      await context.configuration.updateVerifyFormatter(spec.id, false);
-      context.log.warn(
-        `Verify(${spec.id}): Verification disabled via ${context.configuration.verifyFormatterKey(spec.id, true)} setting.`,
-      );
-      break;
-
-    case 'Show Logs':
-      context.log.show(true);
-      break;
-  }
+        case 'Show Logs':
+          context.log.show(true);
+          break;
+      }
+    });
 
   return;
 }
