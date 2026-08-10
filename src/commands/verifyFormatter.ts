@@ -41,7 +41,7 @@ export async function verifyFormatter(
   const result = await verifyFormatterCore(context, formatter, folder?.uri, options);
   if (result) {
     vscode.window.showInformationMessage(
-      `Found '${result.spec.name}' version ${result.version}${folder ? ` for '${folder.name}' workspace.` : ''}`,
+      `Found '${result.spec.name}' version ${result.version}${folder ? ` configured for '${folder.name}' workspace.` : ''}`,
     );
   }
 }

@@ -97,7 +97,8 @@
           "formatto.formatPendingChanges.autoSave": {
             "type": "boolean",
             "default": true,
-            "markdownDescription": "Automatically save files after formatting when running **Format Pending Changes**. When disabled, modified files will be opened in an editor."
+            "markdownDeprecationMessage": "This setting is no longer used. **Format Pending Changes** now formats files directly on disk.",
+            "markdownDescription": "Deprecated. **Format Pending Changes** now formats files directly on disk and this setting has no effect."
           }
         }
       },
@@ -114,9 +115,10 @@
           },
           "formatto.rubyfmtMaxConcurrency": {
             "type": "number",
-            "default": 4,
-            "minimum": 1,
-            "markdownDescription": "Maximum number of `rubyfmt` processes to run concurrently (when concurrency is supported by a given feature)."
+            "default": 0,
+            "maximum": 1024,
+            "minimum": 0,
+            "markdownDescription": "Maximum number of `rubyfmt` processes that may run concurrently. `0` (default) uses the number of logical CPU cores."
           },
           "formatto.rubyfmtPath": {
             "scope": "resource",
@@ -154,10 +156,10 @@
           },
           "formatto.rufoMaxConcurrency": {
             "type": "number",
-            "default": 4,
-            "maximum": 64,
-            "minimum": 1,
-            "markdownDescription": "Maximum number of `rufo` processes to run concurrently (when concurrency is supported by a given feature)."
+            "default": 0,
+            "maximum": 1024,
+            "minimum": 0,
+            "markdownDescription": "Maximum number of `rufo` processes that may run concurrently. `0` (default) uses the number of logical CPU cores."
           },
           "formatto.rufoPreferBundler": {
             "type": "boolean",
@@ -201,10 +203,10 @@
           },
           "formatto.standardrbMaxConcurrency": {
             "type": "number",
-            "default": 4,
-            "maximum": 64,
-            "minimum": 1,
-            "markdownDescription": "Maximum number of `standardrb` processes to run concurrently (when concurrency is supported by a given feature)."
+            "default": 0,
+            "maximum": 1024,
+            "minimum": 0,
+            "markdownDescription": "Maximum number of `standardrb` processes that may run concurrently. `0` (default) uses the number of logical CPU cores."
           },
           "formatto.standardrbPath": {
             "scope": "resource",

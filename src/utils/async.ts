@@ -20,25 +20,42 @@ export function createCancellationPromise(token: vscode.CancellationToken): Prom
 export async function runWithConcurrencyLimit<T>(
   items: Iterable<T>,
   limit: number,
-  fn: (item: T, token: vscode.CancellationToken) => Promise<void>,
+  fn: (item: T, index: number, token: vscode.CancellationToken) => Promise<any>,
   token: vscode.CancellationToken,
 ): Promise<void> {
   const executing = new Set<Promise<void>>();
-  const cancelPromise = createCancellationPromise(token);
+
+  let batchIndex = 0;
+  let firstError: Error | undefined;
 
   for (const item of items) {
-    if (token.isCancellationRequested) {
-      throw new CancellationError();
+    if (firstError || token.isCancellationRequested) {
+      break;
     }
 
-    const p = Promise.race([fn(item, token), cancelPromise]).finally(() => executing.delete(p));
+    const p = Promise.resolve()
+      .then(() => fn(item, batchIndex++, token))
+      .catch((error) => {
+        firstError ??= error;
+      })
+      .finally(() => {
+        executing.delete(p);
+      });
 
     executing.add(p);
 
     if (executing.size >= limit) {
-      await Promise.race([Promise.race(executing), cancelPromise]);
+      await Promise.race(executing);
     }
   }
 
-  await Promise.race([Promise.all(executing), cancelPromise]);
+  await Promise.allSettled(executing);
+
+  if (token.isCancellationRequested) {
+    throw new CancellationError();
+  }
+
+  if (firstError) {
+    throw firstError;
+  }
 }

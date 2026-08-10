@@ -46,7 +46,6 @@ The following settings apply regardless of which formatter is selected.
 | `formatto.enableRangeFormatting` | Enables experimental support for **Format Selection**. | `false` |
 | `formatto.excludePatterns` | Glob patterns for files that should not be formatted, e.g., `**/__package.rb`, `vendor/**/*`. | |
 | `formatto.formatter` | Formatter to use. | `rubyfmt` |
-| `formatto.formatPendingChanges.autoSave` | Automatically save files after formatting when running **Format Pending Changes**. | `true` |
 
 For every formatter, there is a `formatto.«formatter»Path` setting whose value defaults to the executable name, e.g., `rubyfmt`, which is resolved from the system `PATH`. If the formatter cannot be located through `PATH`, configure an explicit executable path instead. The following replacement tokens are available when defining this path:
 
@@ -63,7 +62,7 @@ Patterns use `minimatch` glob syntax and are matched against the full file path.
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rubyfmtArgs` | Additional arguments to pass to `rubyfmt`, e.g., `--header-opt-in`. | |
-| `formatto.rubyfmtMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
+| `formatto.rubyfmtMaxConcurrency` | Maximum number of concurrent processes that may be launched. `0` uses the number of logical CPU cores. | 0 |
 | `formatto.rubyfmtPath` | Path to `rubyfmt`. | `rubyfmt` | 
 | `formatto.verifyRubyfmt` | Verify that `rubyfmt` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
 
@@ -74,7 +73,7 @@ Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Use [`forma
 | Setting | Description | Default |
 |---------|-------------|---------|
 | `formatto.rufoArgs` | Additional arguments to pass to `rufo`. | |
-| `formatto.rufoMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
+| `formatto.rufoMaxConcurrency` | Maximum number of concurrent processes that may be launched. `0` uses the number of logical CPU cores. | 0 |
 | `formatto.rufoPath` | Path to `rufo`. | `rufo` |
 | `formatto.rufoPreferBundler` | Prefer running `rufo` via `bundle exec`. | `false` |
 | `formatto.verifyRufo` | Verify that `rufo` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
@@ -91,7 +90,7 @@ Rufo automatically loads `.rufo` configuration files when present. See the [Rufo
 |---------|-------------|---------|
 | `formatto.standardrbArgs` | Additional arguments to pass to `standardrb`. | |
 | `formatto.standardrbFormattingMode` | Controls how Formatto satisfies `standardrb`'s requirement to operate on real files. | `tmpFile` |
-| `formatto.standardrbMaxConcurrency` | Maximum number of concurrent processes to launch (per feature). | 4 |
+| `formatto.standardrbMaxConcurrency` | Maximum number of concurrent processes that may be launched. `0` uses the number of logical CPU cores. | 0 |
 | `formatto.standardrbPath` | Path to `standardrb`. | `standardrb` |
 | `formatto.standardrbPreferBundler` | Prefer running `standardrb` via `bundle exec`. | `false` |
 | `formatto.verifyStandardrb` | Verify that `standardrb` is available before formatting. The check repeats until successful, then is cached for the session. | `true` |
@@ -118,14 +117,13 @@ If your project uses another formatter, or you simply want to try Formatto witho
 
 ### Format Pending Changes
 
-Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories currently open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or as the final step before opening a pull request. 
+Use the **Formatto: Format Pending Changes** command to format all modified Ruby files in Git repositories open in VS Code. This is a convenient option when you prefer not to enable **Format on Save**, or as the final step before opening a pull request. 
 
 The command:
 * is available only when **at least one Git repository** is open.
 * **refreshes** the repository status known to VS Code. This could take a significant amount of time in some configurations, e.g., large monorepos. Check the [logs](#logs) for timing information.
-* runs up to `formatto.«formatter»MaxConcurrency` formatter processes concurrently.
-
-When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (default), modified files are saved automatically. When disabled, modified files are left unsaved and opened in the editor for manual review.
+* runs up to `formatto.«formatter»MaxConcurrency` formatter processes concurrently, while automatically batching files to avoid overwhelming the system.
+* operates on files on disk. **Unsaved editor changes are not included until the file is saved.**
 
 ### Format Selection
 
@@ -136,7 +134,7 @@ When [`formatto.formatPendingChanges.autoSave`](#configuration) is enabled (defa
 If you understand the limitations, the feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart.
 
 ### Verify Formatter
-Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification displays the detected formatter version.If verification fails, Formatto offers troubleshooting options such as viewing **Logs** or opening **Documentation**..
+Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification displays the detected formatter version. If verification fails, Formatto offers troubleshooting options such as viewing **Logs** or opening **Documentation**..
 
 [↑ Back to top](#table-of-contents)
 

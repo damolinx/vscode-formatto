@@ -5,12 +5,14 @@ import { validateFormatter } from '../formatters/formatterValidation';
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   if (!context.configuration.enableRangeFormatting) {
     context.log.info(
-      "RangeFormat: Disabled. Use 'formatto.enableRangeFormatting' setting to enable it.",
+      "Range formatting is disabled. Use 'formatto.enableRangeFormatting' setting to enable it.",
     );
     return;
   }
 
-  context.log.debug('RangeFormat: Enabled');
+  context.log.debug(
+    "Range formatting is enabled. Use 'formatto.enableRangeFormatting' setting to disable it.",
+  );
   context.disposables.push(
     vscode.languages.registerDocumentRangeFormattingEditProvider(
       context.formatters.getSupportedLanguages(),
@@ -37,25 +39,32 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
+    const location =
+      `${document.uri.fsPath} ` +
+      `[${range.start.line + 1}:${range.start.character + 1}-` +
+      `${range.end.line + 1}:${range.end.character + 1}]`;
+
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
-      this.context.log.error(`RangeFormat: ${reason}. ${document.uri.fsPath}`);
+      this.context.log.error(`No formatter found for ${location}. Reason: ${reason}`);
       return;
     }
 
     const validationReason = validateFormatter(this.context, formatter, document.uri);
     if (validationReason) {
-      this.context.log.error(
-        `RangeFormat(${formatter.spec.id}): ${validationReason}. ${document.uri.fsPath}`,
+      this.context.log.warn(
+        `${formatter.spec.id}: Cannot format ${location}. Reason: ${validationReason}`,
       );
       return;
     }
 
-    const formattingEdit = await formatter.formatDocument(document, range, token);
+    const formattingEdit = await formatter.formatEdit(document, range, token).catch((error) => {
+      this.context.log.error(`${formatter.spec.id}: Failed to format ${location}`, error);
+      return;
+    });
+
     if (!formattingEdit) {
-      this.context.log.debug(
-        `RangeFormat(${formatter.spec.id}): No changes to apply. ${document.uri.fsPath}`,
-      );
+      this.context.log.debug(`${formatter.spec.id}: No formatting changes for ${location}`);
       return;
     }
 
@@ -70,6 +79,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       );
     }
 
+    this.context.log.debug(`${formatter.spec.id}: Generated formatting changes for ${location}`);
     return [formattingEdit];
   }
 

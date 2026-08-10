@@ -4,11 +4,7 @@ import type { Repository } from '../../typings/git';
 import type { ExtensionContext } from '../extensionContext';
 import { Formatter } from '../formatters/formatter';
 import { validateFormatter } from '../formatters/formatterValidation';
-import {
-  CancellationError,
-  createCancellationPromise,
-  runWithConcurrencyLimit,
-} from '../utils/async';
+import { CancellationError, createCancellationPromise } from '../utils/async';
 import { getGitApi } from '../utils/git';
 import { verifyFormatterCore } from './verifyFormatter';
 
@@ -17,7 +13,7 @@ let currentSession: string | undefined;
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
   if (currentSession) {
     context.log.warn(
-      `FormatPendingChanges(${currentSession}): command is already running, ignoring new request`,
+      `FormatPendingChanges(${currentSession}): Command is already running, ignoring new request`,
     );
     return;
   }
@@ -77,10 +73,10 @@ async function formatPendingChangesCore(
 
   const start = Date.now();
   progress.report({ message: 'Checking Git for pending changes…' });
-  context.log.info(
-    `FormatPendingChanges(${currentSession}): Git status checked (${Date.now() - start}ms).`,
-  );
   const grouped = await groupByWorkspace(api.repositories, token);
+  context.log.info(
+    `FormatPendingChanges(${currentSession}): Git status completed (${Date.now() - start}ms).`,
+  );
   if (grouped.size === 0) {
     context.log.info(`FormatPendingChanges(${currentSession}): No pending changes.`);
     return succeeded;
@@ -112,63 +108,37 @@ async function formatWorkspace(
   uris: vscode.Uri[],
   token: vscode.CancellationToken,
 ): Promise<boolean> {
-  const options = {
-    save: context.configuration.getFormatPendingChangesAutoSave(workspaceFolder),
-  };
-
   const targetUris = uris.filter((uri) => {
     const reason = validateFormatter(context, formatter, uri);
     if (reason === undefined) {
       return true;
     }
-    context.log.warn(`FormatPendingChanges(${currentSession}): ${reason}, skipping. ${uri.fsPath}`);
+    context.log.trace(
+      `FormatPendingChanges(${currentSession}): Skipping ${uri.fsPath}. Reason: ${reason}`,
+    );
     return false;
   });
-
-  let succeeded = true;
-  await runWithConcurrencyLimit(
-    targetUris,
-    context.configuration.getMaxConcurrency(formatter.spec.id),
-    (uri) =>
-      formatPendingChange(context, formatter, uri, options, token).then((value) => {
-        succeeded &&= value;
-      }),
-    token,
+  context.log.info(
+    `FormatPendingChanges(${currentSession}): ` +
+      (workspaceFolder ? `${workspaceFolder.name}: ` : '') +
+      `${targetUris.length} files selected, ` +
+      `${uris.length - targetUris.length} skipped.`,
   );
-
-  return succeeded;
-}
-
-async function formatPendingChange(
-  context: ExtensionContext,
-  formatter: Formatter,
-  uri: vscode.Uri,
-  options: { save: boolean },
-  token: vscode.CancellationToken,
-): Promise<boolean> {
-  let succeeded = true;
-  try {
-    const document = await vscode.workspace.openTextDocument(uri);
-    const formattingEdit = await formatter.formatDocument(document, undefined, token);
-    if (!formattingEdit) {
-      context.log.debug(
-        `FormatPendingChanges(${currentSession}): No changes to apply. ${uri.fsPath}`,
-      );
-      return succeeded;
-    }
-
-    const edit = new vscode.WorkspaceEdit();
-    edit.set(uri, [formattingEdit]);
-    if (await vscode.workspace.applyEdit(edit)) {
-      if (options.save) {
-        await document.save();
-      }
-    }
-  } catch (error) {
-    context.log.error(`FormatPendingChanges(${currentSession}): ${error}. ${uri.fsPath}`);
-    succeeded = false;
+  if (targetUris.length === 0) {
+    return true;
   }
 
+  let succeeded: boolean;
+  try {
+    await formatter.formatFiles(workspaceFolder, targetUris, token);
+    succeeded = true;
+  } catch (error) {
+    context.log.error(
+      `FormatPendingChanges(${currentSession}): Failed to format workspace${workspaceFolder ? ` ${workspaceFolder.uri.fsPath}` : ''}`,
+      error,
+    );
+    succeeded = false;
+  }
   return succeeded;
 }
 

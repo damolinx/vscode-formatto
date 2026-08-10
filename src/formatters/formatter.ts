@@ -2,19 +2,15 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
 import { ExtensionContext } from '../extensionContext';
+import { runWithConcurrencyLimit } from '../utils/async';
+import { buildBatches } from '../utils/batching';
+import { commandToLogString } from '../utils/shell';
 import { FormatterSpec } from './formatterSpec';
 
 export interface FormatterCommand {
   cmd: string;
   args: string[];
   cwd?: string;
-}
-
-export interface RunParams {
-  text: string;
-  range?: vscode.Range;
-  scopeUri?: vscode.ConfigurationScope;
-  uri: vscode.Uri;
 }
 
 export abstract class Formatter implements vscode.Disposable {
@@ -27,13 +23,13 @@ export abstract class Formatter implements vscode.Disposable {
     this.disposables = [];
   }
 
-  dispose() {
+  public dispose(): void {
     vscode.Disposable.from(...this.disposables).dispose();
   }
 
   protected buildCommand(
     scope?: vscode.ConfigurationScope,
-    additionalArgs: string[] = [],
+    ...additionalArgs: string[]
   ): FormatterCommand {
     const cmd = this.context.configuration.getFormatterPath(this.spec.id, scope);
     const scopeUri = scope && (scope instanceof vscode.Uri ? scope : scope.uri);
@@ -45,34 +41,22 @@ export abstract class Formatter implements vscode.Disposable {
       : { cmd, args: additionalArgs, cwd };
   }
 
-  public buildFormatCommand(
-    scope: vscode.ConfigurationScope,
-    additionalArgs: string[] = [],
-  ): FormatterCommand {
-    return this.buildCommand(
-      scope,
-      additionalArgs.concat(
-        this.context.configuration.getFormatterAdditionalArgs(this.spec.id, scope),
-      ),
-    );
-  }
+  public abstract buildFormatCommand(
+    scope: vscode.ConfigurationScope | undefined,
+    uris?: readonly vscode.Uri[],
+    ...additionalArgs: string[]
+  ): FormatterCommand;
 
   public buildVersionCommand(scope?: vscode.ConfigurationScope): FormatterCommand {
-    return this.buildCommand(scope, ['--version']);
+    return this.buildCommand(scope, '--version');
   }
-
-  protected abstract format(
-    document: vscode.TextDocument,
-    range?: vscode.Range,
-    token?: vscode.CancellationToken,
-  ): Promise<string | undefined>;
 
   public async formatDocument(
     document: vscode.TextDocument,
     range?: vscode.Range,
     token?: vscode.CancellationToken,
-  ): Promise<vscode.TextEdit | undefined> {
-    let formattedText = await this.format(document, range, token);
+  ): Promise<string | undefined> {
+    let formattedText = await this.formatDocumentCore(document, range, token);
     if (formattedText === undefined) {
       return;
     }
@@ -81,11 +65,67 @@ export abstract class Formatter implements vscode.Disposable {
       formattedText = formattedText.trimEnd();
     }
 
-    return vscode.TextEdit.replace(range ?? this.getFullDocumentRange(document), formattedText);
+    return formattedText;
   }
 
-  private getFullDocumentRange(document: vscode.TextDocument): vscode.Range {
-    return new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+  protected abstract formatDocumentCore(
+    document: vscode.TextDocument,
+    range?: vscode.Range,
+    token?: vscode.CancellationToken,
+  ): Promise<string | undefined>;
+
+  public async formatEdit(
+    document: vscode.TextDocument,
+    range?: vscode.Range,
+    token?: vscode.CancellationToken,
+  ): Promise<vscode.TextEdit | undefined> {
+    const formattedText = await this.formatDocument(document, range, token);
+    if (formattedText === undefined) {
+      return;
+    }
+
+    const rangeToReplace =
+      range ??
+      new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+
+    return vscode.TextEdit.replace(rangeToReplace, formattedText);
+  }
+
+  public async formatFiles(
+    workspaceFolder: vscode.WorkspaceFolder | undefined,
+    uris: readonly vscode.Uri[],
+    token: vscode.CancellationToken,
+  ): Promise<void> {
+    if (uris.length === 0) {
+      return;
+    }
+
+    const maxConcurrency = this.context.configuration.getMaxConcurrency(
+      this.spec.id,
+      workspaceFolder,
+    );
+    const batches = buildBatches(uris, maxConcurrency);
+    const concurrency = maxConcurrency ? Math.min(maxConcurrency, batches.length) : batches.length;
+
+    this.context.log.debug(
+      `${this.spec.id}: Formatting ${uris.length} files using ` +
+        `${batches.length} batches (${concurrency} concurrent).`,
+    );
+    await runWithConcurrencyLimit(
+      batches,
+      concurrency,
+      (uris, batchIndex) =>
+        this.execute(
+          this.buildFormatCommand(workspaceFolder, uris),
+          { logPrefix: `${batchIndex + 1}/${batches.length}` },
+          token,
+        ),
+      token,
+    );
+  }
+
+  protected getFormatConfiguredArgs(scope?: vscode.ConfigurationScope): string[] {
+    return this.context.configuration.getFormatterAdditionalArgs(this.spec.id, scope);
   }
 
   public async getVersion(
@@ -128,9 +168,7 @@ export abstract class Formatter implements vscode.Disposable {
         finished = true;
 
         if (signal) {
-          const error: any = new Error(
-            `Command was killed: ${cmd}${args.length ? ` ${args.join(' ')}` : ''}`,
-          );
+          const error: any = new Error(`Command was killed: ${commandToLogString(cmd, args)}`);
           error.code = signal;
           error.path = cmd;
           resolve({ error });
@@ -146,19 +184,21 @@ export abstract class Formatter implements vscode.Disposable {
     });
   }
 
-  protected async run(
-    { text, range, scopeUri, uri }: RunParams,
+  protected async execute(
+    command: FormatterCommand,
     options?: {
-      args?: string[];
       env?: NodeJS.ProcessEnv;
       errorStream?: 'stderr' | 'stdout';
+      logPrefix?: string;
+      stdinInput?: string;
     },
     token?: vscode.CancellationToken,
-  ): Promise<string | undefined> {
-    const { id } = this.spec;
-    const { args, cmd, cwd } = this.buildFormatCommand(scopeUri ?? uri, options?.args);
+  ): Promise<{ stdout: string; stderr: string }> {
+    const { cmd, args, cwd } = command;
+    const refId = `${this.spec.id}${options?.logPrefix ? `(${options.logPrefix})` : ''}`;
     const startTime = Date.now();
-    return new Promise<string | undefined>((resolve, reject) => {
+
+    return new Promise((resolve, reject) => {
       const child = spawn(cmd, args, {
         cwd,
         env: options?.env,
@@ -166,6 +206,7 @@ export abstract class Formatter implements vscode.Disposable {
         stdio: 'pipe',
         timeout: this.spec.timeouts.formatting,
       });
+
       const disposable = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
         reject(new Error('Formatting canceled'));
@@ -176,6 +217,7 @@ export abstract class Formatter implements vscode.Disposable {
 
       child.stdout.on('data', (chunk) => (stdout += chunk.toString()));
       child.stderr.on('data', (chunk) => (stderr += chunk.toString()));
+
       child.on('error', (error) => {
         disposable?.dispose();
         reject(new Error(error.message, { cause: error }));
@@ -183,49 +225,35 @@ export abstract class Formatter implements vscode.Disposable {
 
       child.on('close', (code) => {
         disposable?.dispose();
+
         if (token?.isCancellationRequested) {
           return;
         }
 
-        const time = Date.now() - startTime;
-        if (range) {
-          const { start, end } = range;
-          const rangeText = `${start.line}${start.character ? `:${start.character}` : ''}-${end.line}${end.character ? `:${end.character}` : ''}`;
-          this.context.log.info(`${id}: Format selection (${time}ms). ${uri.fsPath}:${rangeText}`);
-        } else {
-          this.context.log.info(`${id}: Format document (${time}ms). ${uri.fsPath}`);
+        this.context.log.debug(
+          `${refId}: ${commandToLogString(cmd, args)} (${Date.now() - startTime}ms${cwd ? `, cwd: ${cwd}` : ''})`,
+        );
+        if (code === 0 && (cmd !== 'bundle' || stderr.trim() === '')) {
+          resolve({ stdout, stderr });
+          return;
         }
 
-        const executionInfo = `> ${cmd}${args?.length ? ` ${args.join(' ')}` : ''}${cwd ? ` Cwd: ${cwd}` : ''}`;
-        if (code === 0 && (cmd !== 'bundle' || stderr.trim() === '')) {
-          this.context.log.debug(executionInfo);
-          resolve(stdout !== text ? stdout : undefined);
-        } else {
-          const normalizedError = (
-            options?.errorStream === 'stdout' ? stdout.trim() || stderr : stderr
-          ).trim();
-          const message = child.killed
-            ? `${id} was killed`
-            : `${id} exited${code !== null ? `(${code})` : ''}\n${executionInfo}\n${normalizedError}`;
-          const error: any = new Error(message);
-          error.code = code;
-          reject(error);
-        }
+        const normalizedError = (
+          options?.errorStream === 'stdout' ? stdout.trim() || stderr : stderr
+        ).trim();
+
+        const error: any = new Error(
+          child.killed
+            ? `${refId} was killed`
+            : `${refId} exited${code !== null ? `(${code})` : ''}\n${normalizedError}`,
+        );
+
+        error.code = code;
+        reject(error);
       });
 
-      child.stdin.end(text);
+      child.stdin.end(options?.stdinInput);
     });
-  }
-
-  public supportsDocument(
-    document: vscode.TextDocument,
-  ): { supported: true; reason?: never } | { reason: string; supported?: never } {
-    if (document.isUntitled) {
-      return this.spec.supportedLanguages.includes(document.languageId)
-        ? { supported: true }
-        : { reason: `Unsupported language '${document.languageId}'` };
-    }
-    return this.supportsUri(document.uri);
   }
 
   public supportsUri(

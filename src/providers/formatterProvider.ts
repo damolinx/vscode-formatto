@@ -38,7 +38,7 @@ export class FormatterProvider implements vscode.Disposable {
   public get(name: FormatterId): Formatter {
     let formatter = this.cachedFormatters.get(name);
     if (!formatter) {
-      this.context.log.debug(`FormatterProvider: Create formatter '${name}'`);
+      this.context.log.debug(`Create formatter '${name}'`);
       formatter = this.createFormatter(name);
       this.cachedFormatters.set(name, formatter);
     }

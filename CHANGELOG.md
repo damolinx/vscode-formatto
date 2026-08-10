@@ -1,117 +1,125 @@
-  # Changelog
+# Changelog
 
-  ## 0.4.12
-  - Upgrade minimum VS Code version to 1.125.
-    - Fix: `standardrb` cannot use bundler when `formatto.standardrbFormattingMode` is set to `tmpFile`. 
+## 0.4.13
+- **Format Pending Changes**:
+  - Now handles large change sets more efficiently, with improved batching and concurrency behavior for better performance in large repositories and change sets.
+  - **Deprecated** the `formatto.formatPendingChanges.autoSave` setting as the command now formats files directly on disk.
+- Improved reliability of cancellation and concurrent formatting operations.
+- Improved logging throughout formatting operations, including better visibility into formatter execution, batching, and failures.
+- Fixed several edge cases in scheduled operations.
 
-  ## 0.4.11
-  - Default `formatto.excludePatterns` to `[vendor/**]`.
-    - Add a **Show Logs** button to error notifications.
-  - `standardrb` improvements:
-    - Default maximum concurrency increased to 4 (smaller performance hit than expected).
-    - Handle exit code of 1 as a possible failure to format.
+## 0.4.12
+- Upgrade minimum VS Code version to 1.125.
+  - Fix: `standardrb` cannot use bundler when `formatto.standardrbFormattingMode` is set to `tmpFile`. 
 
-  ## 0.4.10
-  - Add `formatto.rubyfmtMaxConcurrency`, `formatto.rufoMaxConcurrency`, and `formatto.standardrbMaxConcurrency` to control concurrency-level per formatter.
-    - As of this version, only **Format Pending Changes** benefits from this.
-    - All formatters default to 4 except for `standardrb` which defaults to 1.
-  - **Format Pending Changes**:
-    - Improve cancellation behavior, per-workspace setting tracking, and error handling.
-    - Avoid duplicate no-op formatting calls when a modified file is also staged.
-    - Settings:
-      - Add `formatto.formatPendingChanges.autoSave` to automatically save files after formatting. Defaults to `true`. 
-      - Remove `formatto.formatPendingChanges.includeStaged`.
-    - Fix: Do not attempt to open or format non-text files.
+## 0.4.11
+- Default `formatto.excludePatterns` to `[vendor/**]`.
+  - Add a **Show Logs** button to error notifications.
+- `standardrb` improvements:
+  - Default maximum concurrency increased to 4 (smaller performance hit than expected).
+  - Handle exit code of 1 as a possible failure to format.
 
-  ## 0.4.9
-  - Fix: **Format Pending Changes** command should not limit itself early to `.rb` files.
+## 0.4.10
+- Add `formatto.rubyfmtMaxConcurrency`, `formatto.rufoMaxConcurrency`, and `formatto.standardrbMaxConcurrency` to control concurrency-level per formatter.
+  - As of this version, only **Format Pending Changes** benefits from this.
+  - All formatters default to 4 except for `standardrb` which defaults to 1.
+- **Format Pending Changes**:
+  - Improve cancellation behavior, per-workspace setting tracking, and error handling.
+  - Avoid duplicate no-op formatting calls when a modified file is also staged.
+  - Settings:
+    - Add `formatto.formatPendingChanges.autoSave` to automatically save files after formatting. Defaults to `true`. 
+    - Remove `formatto.formatPendingChanges.includeStaged`.
+  - Fix: Do not attempt to open or format non-text files.
 
-  ## 0.4.8
-  - `formatto.excludePatterns` patterns match against workspace‑relative paths - e.g. `vendor/**/*`.
+## 0.4.9
+- Fix: **Format Pending Changes** command should not limit itself early to `.rb` files.
 
-  ## 0.4.7
-  - Fix: formatting disabled when verification is disabled.
+## 0.4.8
+- `formatto.excludePatterns` patterns match against workspace‑relative paths - e.g. `vendor/**/*`.
 
-  ## 0.4.6
-  - Add **Verify Formatter** command.
+## 0.4.7
+- Fix: formatting disabled when verification is disabled.
 
-  ## 0.4.5
-  - Add `formatto.excludePatterns` setting to allow excluding files from formatting using glob patterns (e.g. `**/__package.rb`).
+## 0.4.6
+- Add **Verify Formatter** command.
 
-  ## 0.4.4
-  - Add `formatto.additionalSupportedExtensions` to allow registering additional file extensions for formatting (still editor must be `ruby`, `erb` or `gemfile`).
-    - Note that only Rufo supports ERB files.
-  - Improved formatter execution:
-    - Version and formatting now use separate timeouts, configurable per formatter.
-    - No-change results are correctly recognized and returned.
-    - `standardrb` no longer writes to stdin unnecessarily.
-  - **Format Selection** heuristic matches preceding line indentation.
+## 0.4.5
+- Add `formatto.excludePatterns` setting to allow excluding files from formatting using glob patterns (e.g. `**/__package.rb`).
 
-  ## 0.4.3
-  - Disable warnings emitted by Ruby when running Rufo.
-  - Fix: **Format Cell** adds an unwanted trailing newline in Ruby notebook cells.
+## 0.4.4
+- Add `formatto.additionalSupportedExtensions` to allow registering additional file extensions for formatting (still editor must be `ruby`, `erb` or `gemfile`).
+  - Note that only Rufo supports ERB files.
+- Improved formatter execution:
+  - Version and formatting now use separate timeouts, configurable per formatter.
+  - No-change results are correctly recognized and returned.
+  - `standardrb` no longer writes to stdin unnecessarily.
+- **Format Selection** heuristic matches preceding line indentation.
 
-  ## 0.4.2
-  - Updates the README file.
+## 0.4.3
+- Disable warnings emitted by Ruby when running Rufo.
+- Fix: **Format Cell** adds an unwanted trailing newline in Ruby notebook cells.
 
-  ## 0.4.1
-  - **Format Pending Changes** command:
-    - Add `formatto.formatPendingChanges.includeStaged` to control whether staged changes are included. Defaults to `true`.
-    - Refresh Git status before formatting.
-    - Use progress notification to support cancellation.
-    - Prevent overlapping runs.
-  - Formatter verification improvements:
-    - Add support for `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings.
-    - Verification cache keys off the resolved run command instead of the formatter ID, ensuring verification re-runs on relevant configuration changes.
+## 0.4.2
+- Updates the README file.
 
-  ## 0.4.0
-  - Simplify extension name to **Formatto**
-  - Add **Standard Ruby** as a formatter.
-  - Add `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings to use `bundle exec` to run the formatter.
+## 0.4.1
+- **Format Pending Changes** command:
+  - Add `formatto.formatPendingChanges.includeStaged` to control whether staged changes are included. Defaults to `true`.
+  - Refresh Git status before formatting.
+  - Use progress notification to support cancellation.
+  - Prevent overlapping runs.
+- Formatter verification improvements:
+  - Add support for `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings.
+  - Verification cache keys off the resolved run command instead of the formatter ID, ensuring verification re-runs on relevant configuration changes.
 
-  ## 0.3.1
-  - Update README.
-  - Formatter verification runs only until the formatter is successfully detected.
-  - Declare `gemfile` as supported language. 
-  - Fix: Formatter executions now enforce a 5-second timeout to prevent hangs.
-  - Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
-  - Fix: **Format Selection** injects a trailing newline.
+## 0.4.0
+- Simplify extension name to **Formatto**
+- Add **Standard Ruby** as a formatter.
+- Add `formatto.rufoPreferBundler` and `formatto.standardrbPreferBundler` settings to use `bundle exec` to run the formatter.
 
-  ## 0.3.0
-  - Add support for configurable, multi-root aware formatter backends.
-  - Add **Rufo** as a formatter option using the new backend system.
+## 0.3.1
+- Update README.
+- Formatter verification runs only until the formatter is successfully detected.
+- Declare `gemfile` as supported language. 
+- Fix: Formatter executions now enforce a 5-second timeout to prevent hangs.
+- Fix: **Don't ask again** during verification uses an incorrectly cased setting name.
+- Fix: **Format Selection** injects a trailing newline.
 
-  ## 0.2.3
-  - Logging improvement.
-  - Fix: **Format Pending Changes** command missed applying the update. 
+## 0.3.0
+- Add support for configurable, multi-root aware formatter backends.
+- Add **Rufo** as a formatter option using the new backend system.
 
-  ## 0.2.2
-  - Add **Format Pending Changes** command to format uncommitted `.rb` files.
+## 0.2.3
+- Logging improvement.
+- Fix: **Format Pending Changes** command missed applying the update. 
 
-  ## 0.2.1
-  - Improvements to **Format Selection**.
+## 0.2.2
+- Add **Format Pending Changes** command to format uncommitted `.rb` files.
 
-  ## 0.2.0
-  - Add `formatto.rubyfmtArgs` setting to pass additional arguments to `rubyfmt`.
-  - `rubyfmt` verification UX updates:
-    - **Ignore** option renamed to **Don't ask again**.
-    - `formatto.verifyRubyfmt` setting is always updated in **User Settings** (vs Workspace or Workspace Folder).
-  - Update link to `rubyfmt` installation.
-  - Availability check now logs the `rubyfmt --version` output.
+## 0.2.1
+- Improvements to **Format Selection**.
 
-  ## 0.1.4
-  - Update link to `rubyfmt` installation (current repo).
+## 0.2.0
+- Add `formatto.rubyfmtArgs` setting to pass additional arguments to `rubyfmt`.
+- `rubyfmt` verification UX updates:
+  - **Ignore** option renamed to **Don't ask again**.
+  - `formatto.verifyRubyfmt` setting is always updated in **User Settings** (vs Workspace or Workspace Folder).
+- Update link to `rubyfmt` installation.
+- Availability check now logs the `rubyfmt --version` output.
 
-  ## 0.1.3
-  - Add verification and UX around `rubyfmt` availability before running the formatter.
+## 0.1.4
+- Update link to `rubyfmt` installation (current repo).
 
-  ## 0.1.2
-  - Disable **Format Selection** by default since `rubyfmt` does not support range formatting.
-    - Add `formatto.enableRangeFormatting` setting to opt in to an experimental heuristic.
-  - Add support for `${userHome}` and `${workspaceFolder}` tokens in `formatto.rubyfmtPath`.
+## 0.1.3
+- Add verification and UX around `rubyfmt` availability before running the formatter.
 
-  ## 0.1.1
-  - Add icon.
+## 0.1.2
+- Disable **Format Selection** by default since `rubyfmt` does not support range formatting.
+  - Add `formatto.enableRangeFormatting` setting to opt in to an experimental heuristic.
+- Add support for `${userHome}` and `${workspaceFolder}` tokens in `formatto.rubyfmtPath`.
 
-  ## 0.1.0
-  - Initial version. Runs **rubyfmt** using `formatto.rubyfmtPath` setting value, which defaults to `rubyfmt`.
+## 0.1.1
+- Add icon.
+
+## 0.1.0
+- Initial version. Runs **rubyfmt** using `formatto.rubyfmtPath` setting value, which defaults to `rubyfmt`.

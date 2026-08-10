@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { EXTENSION_PREFIX, MAX_CONCURRENCY } from './constants';
+import { EXTENSION_PREFIX } from './constants';
 import { FormatterId } from './formatters/formatterId';
 import { resolveTokenizedPath } from './utils/pathTokenization';
 
@@ -110,17 +110,14 @@ export class Configuration {
   }
 
   /**
-   * Whether Format Pending Changes should automatically save files after formatting.
+   * Maximum concurrency level.
    */
-  public getFormatPendingChangesAutoSave(scope?: vscode.ConfigurationScope): boolean {
-    return this.getValue(scope, 'formatPendingChanges.autoSave', true);
-  }
-
-  /**
-   * Maximum concurrency level. Defaults to {@link MAX_CONCURRENCY}.
-   */
-  public getMaxConcurrency(formatter: FormatterId, scope?: vscode.ConfigurationScope): number {
-    return this.getValue(scope, `${formatter}MaxConcurrency`, MAX_CONCURRENCY);
+  public getMaxConcurrency(
+    formatter: FormatterId,
+    scope?: vscode.ConfigurationScope,
+  ): number | undefined {
+    const value = this.getValue<number>(scope, `${formatter}MaxConcurrency`);
+    return value && value > 0 ? value : undefined;
   }
 
   /**
