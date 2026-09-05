@@ -1,9 +1,14 @@
 import { FormatterId } from './formatterId';
 
-export const DEFAULT_FORMATTER_TIMEOUTS = {
+export interface FormatterTimeouts {
+  formatting: number;
+  version: number;
+}
+
+export const DEFAULT_FORMATTER_TIMEOUTS: Readonly<FormatterTimeouts> = {
   formatting: 5000,
   version: 1000,
-} as const;
+};
 
 export interface FormatterSpec {
   id: FormatterId;
@@ -18,8 +23,5 @@ export interface FormatterSpec {
   supportedLanguages: readonly string[];
   supportsBundler: boolean;
 
-  timeouts: {
-    formatting: number;
-    version: number;
-  };
+  timeouts: Readonly<FormatterTimeouts>;
 }
