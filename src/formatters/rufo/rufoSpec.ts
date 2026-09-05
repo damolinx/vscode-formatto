@@ -10,9 +10,9 @@ export const RufoFormatterSpec: FormatterSpec = {
     project: 'https://github.com/ruby-formatter/rufo',
   },
 
+  supportsBundler: true,
   supportedExtensions: COMMON_RUBY_EXTENSIONS.concat(['.erb', '.rhtml']),
   supportedLanguages: ['gemfile', 'erb', 'ruby'],
-  supportsBundler: true,
 
   timeouts: DEFAULT_FORMATTER_TIMEOUTS,
 };
