@@ -43,8 +43,8 @@ export class Configuration {
   }
 
   /**
-  * Enable experimental {@link vscode.DocumentRangeFormattingEditProvider range-formatting provider}.
-  */
+   * Enable experimental {@link vscode.DocumentRangeFormattingEditProvider range-formatting provider}.
+   */
   public get enableRangeFormatting(): boolean {
     return this.resolveValue('enableRangeFormatting', false);
   }

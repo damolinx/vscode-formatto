@@ -1,10 +1,11 @@
 # Formatto
 
-Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is **multi‑root** aware, allowing each workspace folder to configure its own formatter.
+Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is **multi‑root** aware, allowing each workspace folder to configure its own formatter. Formatto also supports formatting Ruby notebook cells.
 
-In simple terms, the extension enables the built‑in [**Format Document**](#format-document) command for Ruby files, allowing `editor.formatOnSave` to work with Ruby files. Ruby formatters do not support range formatting, so Formatto uses a heuristic to enable the [**Format Selection**](#format-selection) command. While useful, it has edge cases, so it is therefore disabled by default to avoid confusion. It can be enabled with a simple [configuration](#configuration) change.
+The extension enables the built‑in [**Format Document**](#format-document) command for Ruby files, allowing `editor.formatOnSave` to work with Ruby files. Ruby formatters do not support range formatting, so Formatto uses a heuristic to enable the [**Format Selection**](#format-selection) command. While useful, it has edge cases and is therefore disabled by default to avoid confusion. It can be enabled with a simple [configuration](#configuration) change.
 
 The custom [**Format Pending Changes**](#format-pending-changes) command lets you format all Ruby files with pending changes in your current Git repository, streamlining cleanup before staging or committing.
+
 
 ## Table of Contents
 - [Getting Started](#getting-started)
@@ -32,7 +33,7 @@ The custom [**Format Pending Changes**](#format-pending-changes) command lets yo
    - The formatter executable path is configured using `formatto.rubyfmtPath`, `formatto.rufoPath`, or `formatto.standardrbPath`.
    - Either `formatto.rufoPreferBundler` or `formatto.standardrbPreferBundler` is enabled to run the formatter via `bundle exec` (*rubyfmt* does not support Bundler).
   
-   Whichever option you choose, Formatto verifies that it can run the selected formatter once per session and prompts for action if the formatter cannot be found.
+   Whichever option you choose, Formatto verifies that it can run the selected formatter and caches successful verification results for the session.
 
 Once configured, use the built‑in **Format Document** command, or enable **Editor: Format on Save** to format automatically on save. See [Format Selection](#format-selection) for details on formatting a selection range.
 
@@ -55,7 +56,7 @@ For every formatter, there is a `formatto.«formatter»Path` setting whose value
 #### Exclude Patterns
 `formatto.excludePatterns` lets you prevent specific files from being formatted. This is useful for files that should never be rewritten, such as generated sources or special Ruby files like `__package.rb`.
 
-Patterns use `minimatch` glob syntax and are matched against the full file path. If a file matches any pattern, Formatto skips formatting it. 
+Patterns use `minimatch` glob syntax and are matched against workspace-relative paths. If a file matches any pattern, Formatto skips formatting it. 
 
 ### Rubyfmt
 
@@ -127,14 +128,14 @@ The command:
 
 ### Format Selection
 
- Formatto implements **Format Selection** by sending the selected range to the formatter as if it were the full document, then applying a heuristic to map the result back. Ruby formatters normally operate only on complete, syntactically valid code. Incomplete or broken selections are not currently expanded or repaired by the heuristic, so no change is applied in those cases (see the logs for details). This feature is **experimental** and results may not match **Format Document**. 
+Formatto implements **Format Selection** by sending the selected range to the formatter as if it were the full document, then applying a heuristic to map the result back. Ruby formatters normally operate only on complete, syntactically valid code. Incomplete or broken selections are not currently expanded or repaired by the heuristic, so no change is applied in those cases (see the logs for details). This feature is **experimental** and results may not match **Format Document**. 
 
 > **DO NOT** report issues with selection formatting to the formatter projects. No Ruby formatter supports formatting arbitrary ranges of a file.
 
 If you understand the limitations, the feature can still be very useful. To enable it, use the `formatto.enableRangeFormatting` setting. Changes to this setting take effect only after a restart.
 
 ### Verify Formatter
-Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification displays the detected formatter version. If verification fails, Formatto offers troubleshooting options such as viewing **Logs** or opening **Documentation**..
+Use the **Formatto: Verify Formatter** command to run the verification process for the formatter associated with the current context (workspace folder or global configuration). If verification succeeds, a notification displays the detected formatter version. If verification fails, Formatto offers troubleshooting options such as viewing **Logs** or opening **Documentation**.
 
 [↑ Back to top](#table-of-contents)
 
