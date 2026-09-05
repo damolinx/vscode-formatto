@@ -11,9 +11,6 @@ export function registerDocumentFormattingEditProvider(context: ExtensionContext
   );
 }
 
-/**
- * Format a Ruby document.
- */
 export class DocumentFormattingEditProvider implements vscode.DocumentFormattingEditProvider {
   constructor(private readonly context: ExtensionContext) {}
 
@@ -24,7 +21,7 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
   ): Promise<vscode.TextEdit[] | undefined> {
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
-      this.context.log.error(`No formatter found for ${document.uri.fsPath}. Reason: ${reason}`);
+      this.context.log.warn(`No formatter found for ${document.uri.fsPath}. Reason: ${reason}`);
       return;
     }
 
@@ -36,23 +33,26 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
       return;
     }
 
-    const formattingEdit = await formatter.formatEdit(document, undefined, token).catch((error) => {
+    let formattingEdit: vscode.TextEdit | undefined;
+    try {
+      formattingEdit = await formatter.formatEdit(document, undefined, token);
+    } catch (error) {
       this.context.log.error(
         `${formatter.spec.id}: Failed to format ${document.uri.fsPath}`,
         error,
       );
       return;
-    });
+    }
 
     if (!formattingEdit) {
       this.context.log.debug(
-        `${formatter.spec.id}: No formatting changes for ${document.uri.fsPath}`,
+        `${formatter.spec.id}: No formatting changes generated for ${document.uri.fsPath}`,
       );
       return;
     }
 
     this.context.log.debug(
-      `${formatter.spec.id}: Generated formatting changes for ${document.uri.fsPath}`,
+      `${formatter.spec.id}: Formatting changes generated for ${document.uri.fsPath}`,
     );
     return [formattingEdit];
   }
