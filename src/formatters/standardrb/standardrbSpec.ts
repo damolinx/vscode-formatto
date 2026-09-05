@@ -10,10 +10,9 @@ export const StandardRbFormatterSpec: FormatterSpec = {
     project: 'https://github.com/standardrb/standard',
   },
 
+  supportsBundler: true,
   supportedExtensions: COMMON_RUBY_EXTENSIONS,
   supportedLanguages: ['gemfile', 'ruby'],
-
-  supportsBundler: true,
 
   timeouts: {
     formatting: 10000,

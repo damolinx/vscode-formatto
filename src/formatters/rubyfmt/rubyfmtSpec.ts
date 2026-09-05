@@ -10,10 +10,9 @@ export const RubyfmtFormatterSpec: FormatterSpec = {
     project: 'https://github.com/fables-tales/rubyfmt?tab=readme-ov-file',
   },
 
+  supportsBundler: false,
   supportedExtensions: COMMON_RUBY_EXTENSIONS,
   supportedLanguages: ['gemfile', 'ruby'],
-
-  supportsBundler: false,
 
   timeouts: DEFAULT_FORMATTER_TIMEOUTS,
 };
