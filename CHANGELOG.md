@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.14
+- **Format Pending Changes**: Fixed several edge cases and improved progress and error messages.
+
 ## 0.4.13
 - **Format Pending Changes**:
   - Now handles large change sets more efficiently, with improved batching and concurrency behavior for better performance in large repositories and change sets.

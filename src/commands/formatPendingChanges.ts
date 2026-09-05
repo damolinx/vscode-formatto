@@ -8,6 +8,7 @@ import { CancellationError, createCancellationPromise } from '../utils/async';
 import { getGitApi } from '../utils/git';
 import { verifyFormatterCore } from './verifyFormatter';
 
+const NO_WORKSPACE_KEY = '__no_workspace__';
 let currentSession: string | undefined;
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
@@ -20,23 +21,26 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
 
   let result = true;
   currentSession = randomUUID().slice(0, 8);
+  const sessionId = currentSession;
+
   try {
-    context.log.info(`FormatPendingChanges(${currentSession}): Session start`);
+    context.log.info(`FormatPendingChanges(${sessionId}): Session start`);
     result = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         cancellable: true,
       },
-      (progress, progressToken) => formatPendingChangesCore(context, progress, progressToken),
+      (progress, progressToken) =>
+        formatPendingChangesCore(context, sessionId, progress, progressToken),
     );
   } catch (error: any) {
     if (error instanceof CancellationError) {
-      context.log.info(`FormatPendingChanges(${currentSession}): ${error.message}`);
+      context.log.info(`FormatPendingChanges(${sessionId}): ${error.message}`);
     } else {
       throw error;
     }
   } finally {
-    context.log.info(`FormatPendingChanges(${currentSession}): Session end`);
+    context.log.info(`FormatPendingChanges(${sessionId}): Session end`);
     currentSession = undefined;
   }
 
@@ -56,46 +60,74 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
 
 async function formatPendingChangesCore(
   context: ExtensionContext,
+  sessionId: string,
   progress: vscode.Progress<{ message?: string }>,
   token: vscode.CancellationToken,
 ): Promise<boolean> {
   const api = getGitApi();
   if (!api) {
-    context.log.warn(`FormatPendingChanges(${currentSession}): Git API not available.`);
+    context.log.warn(`FormatPendingChanges(${sessionId}): Git API not available`);
     return false;
   }
 
   let succeeded = true;
   if (api.repositories.length === 0) {
-    context.log.info(`FormatPendingChanges(${currentSession}): No repositories found in workspace`);
+    context.log.info(`FormatPendingChanges(${sessionId}): No repositories found`);
     return succeeded;
   }
 
   const start = Date.now();
-  progress.report({ message: 'Checking Git for pending changes…' });
+  progress.report({ message: 'Checking for uncommitted changes' });
   const grouped = await groupByWorkspace(api.repositories, token);
   context.log.info(
-    `FormatPendingChanges(${currentSession}): Git status completed (${Date.now() - start}ms).`,
+    `FormatPendingChanges(${sessionId}): Git status completed (${Date.now() - start}ms)`,
   );
   if (grouped.size === 0) {
-    context.log.info(`FormatPendingChanges(${currentSession}): No pending changes.`);
+    context.log.info(`FormatPendingChanges(${sessionId}): No uncommitted changes`);
     return succeeded;
   }
 
   for (const { workspaceFolder, uris } of grouped.values()) {
-    const workspaceName = workspaceFolder?.name ?? 'no workspace';
-    progress.report({ message: `Formatting pending changes for ${workspaceName} files…` });
+    if (token.isCancellationRequested) {
+      throw new CancellationError();
+    }
+
+    progress.report({
+      message: `Formatting ${uris.length} changed file(s)${workspaceFolder ? ` in '${workspaceFolder.name}'` : ''}`,
+    });
 
     const formatter = context.formatters.getFor(workspaceFolder);
-    if (!formatter || !(await verifyFormatterCore(context, formatter, workspaceFolder?.uri))) {
+    if (!formatter) {
       context.log.warn(
-        `FormatPendingChanges(${currentSession}): No formatter available for ${workspaceName} files, skipping.`,
+        `FormatPendingChanges(${sessionId}): ${
+          workspaceFolder
+            ? `No formatter configured for '${workspaceFolder.name}'`
+            : 'No default formatter configured'
+        }, skipping`,
       );
       succeeded = false;
       continue;
     }
 
-    succeeded &&= await formatWorkspace(context, formatter, workspaceFolder, uris, token);
+    if (!(await verifyFormatterCore(context, formatter, workspaceFolder?.uri))) {
+      context.log.warn(
+        `FormatPendingChanges(${sessionId}): Formatter '${formatter.spec.id}' not available${
+          workspaceFolder ? ` for '${workspaceFolder.name}'` : ''
+        }, skipping`,
+      );
+      succeeded = false;
+      continue;
+    }
+
+    const workspaceSucceeded = await formatWorkspace(
+      context,
+      sessionId,
+      formatter,
+      workspaceFolder,
+      uris,
+      token,
+    );
+    succeeded &&= workspaceSucceeded;
   }
 
   return succeeded;
@@ -103,6 +135,7 @@ async function formatPendingChangesCore(
 
 async function formatWorkspace(
   context: ExtensionContext,
+  sessionId: string,
   formatter: Formatter,
   workspaceFolder: vscode.WorkspaceFolder | undefined,
   uris: vscode.Uri[],
@@ -114,32 +147,30 @@ async function formatWorkspace(
       return true;
     }
     context.log.trace(
-      `FormatPendingChanges(${currentSession}): Skipping ${uri.fsPath}. Reason: ${reason}`,
+      `FormatPendingChanges(${sessionId}): Skipping ${uri.fsPath}. Reason: ${reason}`,
     );
     return false;
   });
   context.log.info(
-    `FormatPendingChanges(${currentSession}): ` +
+    `FormatPendingChanges(${sessionId}): ` +
       (workspaceFolder ? `${workspaceFolder.name}: ` : '') +
-      `${targetUris.length} files selected, ` +
-      `${uris.length - targetUris.length} skipped.`,
+      `${targetUris.length} selected, ` +
+      `${uris.length - targetUris.length} skipped`,
   );
   if (targetUris.length === 0) {
     return true;
   }
 
-  let succeeded: boolean;
   try {
     await formatter.formatFiles(workspaceFolder, targetUris, token);
-    succeeded = true;
+    return true;
   } catch (error) {
     context.log.error(
-      `FormatPendingChanges(${currentSession}): Failed to format workspace${workspaceFolder ? ` ${workspaceFolder.uri.fsPath}` : ''}`,
+      `FormatPendingChanges(${sessionId}): Failed to format workspace${workspaceFolder ? ` ${workspaceFolder.uri.fsPath}` : ''}`,
       error,
     );
-    succeeded = false;
+    return false;
   }
-  return succeeded;
 }
 
 async function groupByWorkspace(
@@ -167,7 +198,7 @@ async function groupByWorkspace(
 
     for (const uri of uris.values()) {
       const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-      const key = workspaceFolder?.uri.toString() ?? 'no-workspace';
+      const key = workspaceFolder?.uri.toString() ?? NO_WORKSPACE_KEY;
       let group = workspaceToFilesMap.get(key);
       if (!group) {
         group = { workspaceFolder, uris: [] };
