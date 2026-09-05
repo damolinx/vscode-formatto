@@ -21,7 +21,6 @@
 
 ## 0.4.10
 - Add `formatto.rubyfmtMaxConcurrency`, `formatto.rufoMaxConcurrency`, and `formatto.standardrbMaxConcurrency` to control concurrency-level per formatter.
-  - As of this version, only **Format Pending Changes** benefits from this.
   - All formatters default to 4 except for `standardrb` which defaults to 1.
 - **Format Pending Changes**:
   - Improve cancellation behavior, per-workspace setting tracking, and error handling.
