@@ -2,6 +2,7 @@
 
 ## 0.4.14
 - **Format Pending Changes**: Fixed several edge cases and improved progress and error messages.
+- Improved formatters reliability and diagnostics.
 
 ## 0.4.13
 - **Format Pending Changes**:
