@@ -21,7 +21,7 @@ export class StandardRbFormatter extends Formatter {
             rmSync(this.tmpDirPath.fsPath, { recursive: true });
           } catch (error: any) {
             this.context.log.error(
-              `${this.spec.id}: Failed to delete: ${this.tmpDirPath}`,
+              `${this.spec.id}: Failed to delete: ${this.tmpDirPath.fsPath}`,
               error?.message ?? error,
             );
           }
@@ -112,7 +112,7 @@ export class StandardRbFormatter extends Formatter {
     } finally {
       if (tmpFile) {
         await fsPromises.unlink(tmpFile.fsPath).catch((reason) => {
-          this.context.log.error(`${this.spec.id}: Failed to delete: ${tmpFile}`, reason);
+          this.context.log.error(`${this.spec.id}: Failed to delete: ${tmpFile?.fsPath}`, reason);
         });
       }
     }
