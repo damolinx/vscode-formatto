@@ -23,8 +23,8 @@ export function registerRangeFormattingEditProvider(context: ExtensionContext): 
 
 /**
  * Format a selection in a Ruby document. Range formatting is not supported by
- * formatters so this implementation uses the selection as as-is and adjusts
- * the indentation. Experimental.
+ * formatters so this implementation uses the selection as-is and adjusts the
+ * indentation. Experimental.
  */
 export class RangeFormattingEditProvider implements vscode.DocumentRangeFormattingEditProvider {
   constructor(private readonly context: ExtensionContext) {}
@@ -58,13 +58,18 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       return;
     }
 
-    const formattingEdit = await formatter.formatEdit(document, range, token).catch((error) => {
+    let formattingEdit: vscode.TextEdit | undefined;
+    try {
+      formattingEdit = await formatter.formatEdit(document, range, token);
+    } catch (error) {
       this.context.log.error(`${formatter.spec.id}: Failed to format ${location}`, error);
       return;
-    });
+    }
 
     if (!formattingEdit) {
-      this.context.log.debug(`${formatter.spec.id}: No formatting changes for ${location}`);
+      this.context.log.debug(
+        `${formatter.spec.id}: No formatting changes generated for ${location}`,
+      );
       return;
     }
 
@@ -79,7 +84,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
       );
     }
 
-    this.context.log.debug(`${formatter.spec.id}: Generated formatting changes for ${location}`);
+    this.context.log.debug(`${formatter.spec.id}: Formatting changes generated for ${location}`);
     return [formattingEdit];
   }
 
