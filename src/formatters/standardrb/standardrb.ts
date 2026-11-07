@@ -89,8 +89,9 @@ export class StandardRbFormatter extends Formatter {
 
     await this.execute(this.buildFormatCommand(document.uri, [document.uri]), undefined, token);
 
-    // Ensure formatted content is read as document might not reload immediately.
-    return await this.readFile(document.uri);
+    // Read formatted content directly because the editor may not reload immediately.
+    const content = await this.readFile(document.uri);
+    return content;
   }
 
   private async formatWithTemporaryFile(
