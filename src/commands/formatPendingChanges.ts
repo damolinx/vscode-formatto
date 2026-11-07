@@ -150,10 +150,10 @@ async function formatWorkspace(
     return false;
   });
   context.log.info(
-    `FormatPendingChanges(${sessionId}): ` +
-      (workspaceFolder ? `${workspaceFolder.name}: ` : '') +
-      `${targetUris.length} selected, ` +
-      `${uris.length - targetUris.length} skipped`,
+    `FormatPendingChanges(${sessionId}):` +
+      ` ${targetUris.length} files selected` +
+      ` (${uris.length - targetUris.length} skipped)` +
+      (workspaceFolder ? ` in workspace '${workspaceFolder.name}'` : ''),
   );
   if (targetUris.length === 0) {
     return true;
