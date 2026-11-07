@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { validateFormatter } from '../formatters/formatterValidation';
 
 export function registerRangeFormattingEditProvider(context: ExtensionContext): void {
   if (!context.configuration.enableRangeFormatting) {
@@ -46,15 +45,7 @@ export class RangeFormattingEditProvider implements vscode.DocumentRangeFormatti
 
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
-      this.context.log.error(`No formatter found for ${location}. Reason: ${reason}`);
-      return;
-    }
-
-    const validationReason = validateFormatter(this.context, formatter, document.uri);
-    if (validationReason) {
-      this.context.log.warn(
-        `${formatter.spec.id}: Cannot format ${location}. Reason: ${validationReason}`,
-      );
+      this.context.log.warn(`No formatter for ${location}. Reason: ${reason}`);
       return;
     }
 

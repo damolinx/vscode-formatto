@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { validateFormatter } from '../formatters/formatterValidation';
 
 export function registerDocumentFormattingEditProvider(context: ExtensionContext): void {
   context.disposables.push(
@@ -21,15 +20,7 @@ export class DocumentFormattingEditProvider implements vscode.DocumentFormatting
   ): Promise<vscode.TextEdit[] | undefined> {
     const { formatter, reason } = this.context.formatters.resolveFor(document.uri);
     if (!formatter) {
-      this.context.log.warn(`No formatter found for ${document.uri.fsPath}. Reason: ${reason}`);
-      return;
-    }
-
-    const validationReason = validateFormatter(this.context, formatter, document.uri);
-    if (validationReason) {
-      this.context.log.warn(
-        `${formatter.spec.id}: Cannot format ${document.uri.fsPath}. Reason: ${validationReason}`,
-      );
+      this.context.log.warn(`No formatter for ${document.uri.fsPath}. Reason: ${reason}`);
       return;
     }
 
