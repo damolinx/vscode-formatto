@@ -18,8 +18,10 @@ export class FormatterProvider implements vscode.Disposable {
     this.cachedFormatters = new Map();
   }
 
-  dispose() {
-    vscode.Disposable.from(...this.cachedFormatters.values()).dispose();
+  public dispose(): void {
+    for (const formatter of this.cachedFormatters.values()) {
+      formatter.dispose();
+    }
   }
 
   private createFormatter(name: FormatterId): Formatter {
@@ -50,7 +52,7 @@ export class FormatterProvider implements vscode.Disposable {
     return this.get(name);
   }
 
-  public getSupportedLanguages(): string[] {
+  public getSupportedLanguages(): readonly string[] {
     this.supportedLanguages ??= Array.from(
       new Set(
         [RubyfmtFormatterSpec, RufoFormatterSpec, StandardRbFormatterSpec].flatMap(

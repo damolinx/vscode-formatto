@@ -9,23 +9,23 @@ import { getGitApi } from '../utils/git';
 import { verifyFormatterCore } from './verifyFormatter';
 
 const NO_WORKSPACE_KEY = '__no_workspace__';
-let currentSession: string | undefined;
+let currentSessionId: string | undefined;
 
 export async function formatPendingChanges(context: ExtensionContext): Promise<void> {
-  if (currentSession) {
+  if (currentSessionId) {
     context.log.warn(
-      `FormatPendingChanges(${currentSession}): Command is already running, ignoring new request`,
+      `FormatPendingChanges(${currentSessionId}): Command is already running, ignoring new request`,
     );
     return;
   }
 
-  let result = true;
-  currentSession = randomUUID().slice(0, 8);
-  const sessionId = currentSession;
+  let succeeded = true;
+  const sessionId = randomUUID().slice(0, 8);
+  currentSessionId = sessionId;
 
   try {
     context.log.info(`FormatPendingChanges(${sessionId}): Session start`);
-    result = await vscode.window.withProgress(
+    succeeded = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         cancellable: true,
@@ -33,7 +33,7 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
       (progress, progressToken) =>
         formatPendingChangesCore(context, sessionId, progress, progressToken),
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof CancellationError) {
       context.log.info(`FormatPendingChanges(${sessionId}): ${error.message}`);
     } else {
@@ -41,17 +41,15 @@ export async function formatPendingChanges(context: ExtensionContext): Promise<v
     }
   } finally {
     context.log.info(`FormatPendingChanges(${sessionId}): Session end`);
-    currentSession = undefined;
+    currentSessionId = undefined;
   }
 
-  if (!result) {
-    vscode.window
-      .showWarningMessage(
-        'Not all files were formatted, check logs for error details.',
-        'Show Logs',
-      )
+  if (!succeeded) {
+    const showLogs = 'Show Logs';
+    void vscode.window
+      .showWarningMessage('Not all files were formatted, check logs for details.', showLogs)
       .then((selection) => {
-        if (selection) {
+        if (selection === showLogs) {
           context.log.show(true);
         }
       });
@@ -76,18 +74,18 @@ async function formatPendingChangesCore(
     return succeeded;
   }
 
-  const start = Date.now();
+  const start = performance.now();
   progress.report({ message: 'Checking for uncommitted changes' });
-  const grouped = await groupByWorkspace(api.repositories, token);
+  const workspaceGroups = await groupByWorkspace(api.repositories, token);
   context.log.info(
-    `FormatPendingChanges(${sessionId}): Git status completed (${Date.now() - start}ms)`,
+    `FormatPendingChanges(${sessionId}): Git status completed (${Math.round(performance.now() - start)}ms)`,
   );
-  if (grouped.size === 0) {
+  if (workspaceGroups.size === 0) {
     context.log.info(`FormatPendingChanges(${sessionId}): No uncommitted changes`);
     return succeeded;
   }
 
-  for (const { workspaceFolder, uris } of grouped.values()) {
+  for (const { workspaceFolder, uris } of workspaceGroups.values()) {
     if (token.isCancellationRequested) {
       throw new CancellationError();
     }
@@ -166,7 +164,7 @@ async function formatWorkspace(
     return true;
   } catch (error) {
     context.log.error(
-      `FormatPendingChanges(${sessionId}): Failed to format workspace${workspaceFolder ? ` ${workspaceFolder.uri.fsPath}` : ''}`,
+      `FormatPendingChanges(${sessionId}): Failed to format workspace${workspaceFolder ? ` '${workspaceFolder.name}'` : ''}`,
       error,
     );
     return false;

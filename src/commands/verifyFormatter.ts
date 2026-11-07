@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ExtensionContext } from '../extensionContext';
-import { Formatter } from '../formatters/formatter';
+import { Formatter, ProcessError } from '../formatters/formatter';
 import { FormatterId } from '../formatters/formatterId';
 import { FormatterSpec } from '../formatters/formatterSpec';
 
@@ -79,27 +79,30 @@ export async function verifyFormatterCore(
     cmd === 'bundle'
       ? 'Check your Gemfile and ensure the formatter gem is installed.'
       : 'The formatter may be missing or incompatible with this system.';
+  const showLogs = 'Show Logs';
+  const documentation = 'Documentation';
+  const dontAskAgain = "Don't ask again";
   const items = spec.docs.installation
-    ? ['Show Logs', 'Documentation', "Don't ask again"]
-    : ['Show Logs', "Don't ask again"];
+    ? ([showLogs, documentation, dontAskAgain] as const)
+    : ([showLogs, dontAskAgain] as const);
 
   // DO NOT await, otherwise it locks callers
-  vscode.window
+  void vscode.window
     .showWarningMessage(`Failed to run '${spec.name}'. ${message}`, ...items)
     .then(async (selection) => {
       switch (selection) {
-        case 'Documentation':
+        case documentation:
           void vscode.env.openExternal(vscode.Uri.parse(spec.docs.installation!));
           break;
 
-        case "Don't ask again":
+        case dontAskAgain:
           await context.configuration.updateVerifyFormatter(spec.id, false);
           context.log.warn(
             `Verify(${spec.id}): Verification disabled via ${context.configuration.verifyFormatterKey(spec.id, true)} setting.`,
           );
           break;
 
-        case 'Show Logs':
+        case showLogs:
           context.log.show(true);
           break;
       }
@@ -108,7 +111,7 @@ export async function verifyFormatterCore(
   return;
 }
 
-function getErrorMessage(error: Error & { code: string; path: string }): string {
+function getErrorMessage(error: ProcessError): string {
   switch (error.code) {
     case 'ENOENT':
       return `Command not found: ${error.path} (${error.code})`;

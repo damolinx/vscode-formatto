@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import { extname } from 'path';
 import { ExtensionContext } from '../extensionContext';
-import { runWithConcurrencyLimit } from '../utils/async';
+import { CancellationError, runWithConcurrencyLimit } from '../utils/async';
 import { buildBatches } from '../utils/batching';
 import { commandToLogString } from '../utils/shell';
 import { FormatterSpec } from './formatterSpec';
@@ -13,8 +13,13 @@ export interface FormatterCommand {
   cwd?: string;
 }
 
+export interface ProcessError extends Error {
+  code: string | undefined;
+  path: string;
+}
+
 export abstract class Formatter implements vscode.Disposable {
-  protected disposables: vscode.Disposable[];
+  protected readonly disposables: vscode.Disposable[];
 
   protected constructor(
     public readonly context: ExtensionContext,
@@ -24,7 +29,9 @@ export abstract class Formatter implements vscode.Disposable {
   }
 
   public dispose(): void {
-    vscode.Disposable.from(...this.disposables).dispose();
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
   }
 
   protected buildCommand(
@@ -132,10 +139,7 @@ export abstract class Formatter implements vscode.Disposable {
     cmd: string,
     cwd?: string,
     args: string[] = [],
-  ): Promise<
-    | { error: Error & { code: string; path: string }; version?: never }
-    | { error?: never; version: string }
-  > {
+  ): Promise<{ error: ProcessError; version?: never } | { error?: never; version: string }> {
     return new Promise((resolve) => {
       const child = spawn(cmd, args, { cwd });
 
@@ -160,7 +164,10 @@ export abstract class Formatter implements vscode.Disposable {
       child.on('error', (error: Error) => {
         clearTimeout(killTimer);
         finished = true;
-        resolve({ error: error as any });
+        const processError = error as ProcessError;
+        processError.code ??= undefined;
+        processError.path ??= cmd;
+        resolve({ error: processError });
       });
 
       child.on('close', (code, signal) => {
@@ -168,12 +175,16 @@ export abstract class Formatter implements vscode.Disposable {
         finished = true;
 
         if (signal) {
-          const error: any = new Error(`Command was killed: ${commandToLogString(cmd, args)}`);
+          const error = new Error(
+            `Command was killed: ${commandToLogString(cmd, args)}`,
+          ) as ProcessError;
           error.code = signal;
           error.path = cmd;
           resolve({ error });
         } else if (code !== 0) {
-          const error: any = new Error(stderr || `Command failed with exit code ${code}`);
+          const error = new Error(
+            stderr || `Command failed with exit code ${code}`,
+          ) as ProcessError;
           error.code = code?.toString();
           error.path = cmd;
           resolve({ error });
@@ -196,7 +207,7 @@ export abstract class Formatter implements vscode.Disposable {
   ): Promise<{ stdout: string; stderr: string }> {
     const { cmd, args, cwd } = command;
     const refId = `${this.spec.id}${options?.logPrefix ? `(${options.logPrefix})` : ''}`;
-    const startTime = Date.now();
+    const start = performance.now();
 
     return new Promise((resolve, reject) => {
       const child = spawn(cmd, args, {
@@ -209,7 +220,7 @@ export abstract class Formatter implements vscode.Disposable {
 
       const disposable = token?.onCancellationRequested(() => {
         child.kill('SIGKILL');
-        reject(new Error('Formatting canceled'));
+        reject(new CancellationError('Formatting canceled'));
       });
 
       let stdout = '';
@@ -231,7 +242,7 @@ export abstract class Formatter implements vscode.Disposable {
         }
 
         this.context.log.debug(
-          `${refId}: ${commandToLogString(cmd, args)} (${Date.now() - startTime}ms${cwd ? `, cwd: ${cwd}` : ''})`,
+          `${refId}: ${commandToLogString(cmd, args)} (${Math.round(performance.now() - start)}ms${cwd ? `, cwd: ${cwd}` : ''})`,
         );
         if (code === 0 && (cmd !== 'bundle' || stderr.trim() === '')) {
           resolve({ stdout, stderr });
@@ -242,13 +253,14 @@ export abstract class Formatter implements vscode.Disposable {
           options?.errorStream === 'stdout' ? stdout.trim() || stderr : stderr
         ).trim();
 
-        const error: any = new Error(
+        const error = new Error(
           child.killed
             ? `${refId} was killed`
             : `${refId} exited${code !== null ? `(${code})` : ''}\n${normalizedError}`,
-        );
+        ) as ProcessError;
 
-        error.code = code;
+        error.code = code?.toString();
+        error.path = cmd;
         reject(error);
       });
 

@@ -12,9 +12,9 @@ export function createCancellationPromise(token: vscode.CancellationToken): Prom
     return Promise.reject(new CancellationError());
   }
 
-  return new Promise((_, reject) => {
-    token.onCancellationRequested(() => reject(new CancellationError()));
-  });
+  return new Promise((_, reject) =>
+    token.onCancellationRequested(() => reject(new CancellationError())),
+  );
 }
 
 export async function runWithConcurrencyLimit<T>(
