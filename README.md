@@ -2,7 +2,7 @@
 
 Formatto is a flexible Ruby formatter for VS Code supporting [rubyfmt](https://github.com/fables-tales/rubyfmt), [rufo](https://github.com/ruby-formatter/rufo), and [standardrb](https://github.com/standardrb/standard). It is **multi‑root** aware, allowing each workspace folder to configure its own formatter. Formatto also supports formatting Ruby notebook cells.
 
-The extension enables the built‑in [**Format Document**](#format-document) command for Ruby files, allowing `editor.formatOnSave` to work with Ruby files. Ruby formatters do not support range formatting, so Formatto uses a heuristic to enable the [**Format Selection**](#format-selection) command. While useful, it has edge cases and is therefore disabled by default to avoid confusion. It can be enabled with a simple [configuration](#configuration) change.
+The extension implements VS Code's built‑in [**Format Document**](#format-document) command for Ruby files, allowing `editor.formatOnSave` to work with supported Ruby file types. Ruby formatters do not support range formatting, so Formatto uses a heuristic to enable the [**Format Selection**](#format-selection) command. While useful, it has edge cases and is therefore disabled by default to avoid confusion. It can be enabled with a simple [configuration](#configuration) change.
 
 The custom [**Format Pending Changes**](#format-pending-changes) command lets you format all Ruby files with pending changes in your current Git repository, streamlining cleanup before staging or committing.
 
@@ -17,6 +17,7 @@ The custom [**Format Pending Changes**](#format-pending-changes) command lets yo
   - [Format Document](#format-document)
   - [Format Pending Changes](#format-pending-changes)
   - [Format Selection](#format-selection)
+  - [Verify Formatter](#verify-formatter)
 - [Logs](#logs)
 
 ## Getting Started
@@ -125,7 +126,7 @@ Supported extensions: `.rb`, `.rbs`, `.rbi`, `.gemspec`, `.podspec`. Additional 
 #### Save-to-disk behavior
 *Standard Ruby* differs from *rubyfmt* and *rufo* because it can only format files on disk. Formatto provides the following modes to address this limitation (configurable via the `formatto.standardrbFormattingMode` setting):
 
-* *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional file system operations, but avoids an unexpected save of the document and is therefore the default behavior. The extension attempts to clean up these temporary files immediately, so they should not accumulate.
+* *tmpFile*: writes the editor contents to a temporary file, formats that file, and applies the resulting changes back to the editor. This is slower due to the additional file system operations, but avoids an unexpected save of the document and is therefore the default behavior. The extension cleans up temporary files immediately after formatting.
 * *forceSave*: saves the document to disk before formatting it. This is not the default mode because it changes VS Code's standard formatter behavior in a significant way, but it may be preferred if you work on large files (to avoid additional I/O overhead).
 
 When the editor has no unsaved changes, `standardrb` runs directly against the file on disk, allowing VS Code to detect the resulting changes automatically.

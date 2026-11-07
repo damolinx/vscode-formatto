@@ -25,6 +25,7 @@
     "Programming Languages"
   ],
   "keywords": [
+    "bundler",
     "erb",
     "format",
     "formatter",
@@ -164,7 +165,7 @@
           "formatto.rufoPreferBundler": {
             "type": "boolean",
             "default": false,
-            "markdownDescription": "Prefer running `rufo` via `bundle exec` when a Gemfile is present and no explicit `formatto.rufoPath` is set."
+            "markdownDescription": "Prefer running `rufo` via `bundle exec` when a Gemfile is present."
           },
           "formatto.verifyRufo": {
             "type": "boolean",
@@ -219,7 +220,7 @@
           "formatto.standardrbPreferBundler": {
             "type": "boolean",
             "default": false,
-            "markdownDescription": "Prefer running `standardrb` via `bundle exec`."
+            "markdownDescription": "Prefer running `standardrb` via `bundle exec` when a Gemfile is present."
           },
           "formatto.verifyStandardrb": {
             "type": "boolean",
